@@ -5,15 +5,20 @@ import argparse
 # Instantiate the parser
 parser = argparse.ArgumentParser(description='Buy at open and sell at close')
 
-parser.add_argument('ticker', type=str,
+parser.add_argument('--ticker', type=str, required=True,
                     help='stock to be traded')
 
-parser.add_argument('amount', type=int,
+parser.add_argument('--amount', type=int, required=True,
                     help='shares to trade')
+parser.add_argument('--real', type=bool, required=True)
 args = parser.parse_args()
 
 ib=IB()
-ib.connect('127.0.0.1', 4002, clientId=13)
+if args.real: 
+    port=4002
+else:
+    port=4001
+ib.connect('127.0.0.1', port, clientId=13)
 
 contract = Stock(args.ticker, exchange='SMART', currency='USD')
 ib.qualifyContracts(contract)
