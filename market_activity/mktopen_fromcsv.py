@@ -16,15 +16,14 @@ args = parser.parse_args()
 
 ib = initiate.initiate_ib(args, 13)
 
-stockdict = csv.DictReader(open(args.file, "r"), fieldnames = ['ticker','price'])
+stockdict = csv.DictReader(open(args.file, "r"), fieldnames = ['ticker','quantity'])
 
 for row in stockdict:
     row['contract']=Stock(row['ticker'], exchange='SMART', currency='USD')
     ib.qualifyContracts(row['contract'])
-    quantity = cash_per_stock/int(row['price'])
-    buy_order=Order(action = 'BUY', orderType = 'LMT', totalQuantity = quantity , tif = 'OPG', lmtPrice=row['price'])
+    buy_order=Order(action = 'BUY', orderType = 'MKT', totalQuantity = row['quantity'] , tif = 'OPG' ])
     buy_trade = ib.placeOrder(row['contract'], buy_order)
-    sell_order=Order(action = 'SELL', orderType = 'MOC', totalQuantity = quantity )
+    sell_order=Order(action = 'SELL', orderType = 'MOC', totalQuantity = row['quantity'] )
     sell_trade = ib.placeOrder(row['contract'], sell_order)
 
 ib.disconnect()
