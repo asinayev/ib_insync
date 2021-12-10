@@ -1,4 +1,5 @@
 from ib_insync import *
+from connection import initiate
 
 import argparse
 
@@ -9,12 +10,8 @@ parser.add_argument('--real', dest='real', action = 'store_true')
 parser.set_defaults(feature=False)
 args = parser.parse_args()
 
-ib=IB()
-if args.real: 
-    port=4001
-else:
-    port=4002
-ib.connect('127.0.0.1', port, clientId=122)
+ib = initiate.initiate_ib(args, 13)
+
 x = ib.reqAllOpenOrders()
 print(len(x))
 for OtC in x: 

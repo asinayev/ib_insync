@@ -1,4 +1,5 @@
 from ib_insync import *
+from connection import initiate
 
 import argparse
 
@@ -7,21 +8,13 @@ parser = argparse.ArgumentParser(description='Buy at open and sell at close')
 
 parser.add_argument('--ticker', type=str, required=True,
                     help='stock to be traded')
-
 parser.add_argument('--amount', type=int, required=True,
                     help='shares to trade')
 parser.add_argument('--real', dest='real', action = 'store_true') 
 parser.set_defaults(feature=False)
 args = parser.parse_args()
 
-args = parser.parse_args()
-
-ib=IB()
-if args.real: 
-    port=4001
-else:
-    port=4002
-ib.connect('127.0.0.1', port, clientId=13)
+ib = initiate.initiate_ib(args, 13)
 
 contract = Stock(args.ticker, exchange='SMART', currency='USD')
 ib.qualifyContracts(contract)

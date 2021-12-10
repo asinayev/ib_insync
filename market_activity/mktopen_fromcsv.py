@@ -1,4 +1,5 @@
 from ib_insync import *
+from connection import initiate
 
 import argparse
 import csv
@@ -6,28 +7,16 @@ import csv
 cash_per_stock = 5000
 
 # Instantiate the parser
-parser = argparse.ArgumentParser(description='limit buy a list of stocks at open and then sell at market close')
+parser = argparse.ArgumentParser(description='market buy listed quantities of stocks at open and then sell at market close')
 
 parser.add_argument('--file', type=str, required=True)
 parser.add_argument('--real', dest='real', action = 'store_true') 
 parser.set_defaults(feature=False)
 args = parser.parse_args()
 
-ib=IB()
-if args.real: 
-    port=4001
-else:
-    port=4002
-ib.connect('127.0.0.1', port, clientId=1333)
+ib = initiate.initiate_ib(args, 13)
 
 stockdict = csv.DictReader(open(args.file, "r"), fieldnames = ['ticker','price'])
-
-ib=IB()
-if args.real: 
-    port=4001
-else:
-    port=4002
-ib.connect('127.0.0.1', port, clientId=13)
 
 for row in stockdict:
     row['contract']=Stock(row['ticker'], exchange='SMART', currency='USD')
