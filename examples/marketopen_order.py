@@ -10,14 +10,17 @@ parser.add_argument('--ticker', type=str, required=True,
 
 parser.add_argument('--amount', type=int, required=True,
                     help='shares to trade')
-parser.add_argument('--real', type=bool, required=True)
+parser.add_argument('--real', dest='real', action = 'store_true') 
+parser.set_defaults(feature=False)
+args = parser.parse_args()
+
 args = parser.parse_args()
 
 ib=IB()
 if args.real: 
-    port=4002
-else:
     port=4001
+else:
+    port=4002
 ib.connect('127.0.0.1', port, clientId=13)
 
 contract = Stock(args.ticker, exchange='SMART', currency='USD')

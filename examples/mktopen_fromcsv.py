@@ -3,32 +3,40 @@ from ib_insync import *
 import argparse
 import csv
 
+cash_per_stock = 5000
+
 # Instantiate the parser
-parser = argparse.ArgumentParser(description='Buy at open and sell at close')
+parser = argparse.ArgumentParser(description='limit buy a list of stocks at open and then sell at market close')
 
 parser.add_argument('--file', type=str, required=True)
+parser.add_argument('--real', dest='real', action = 'store_true') 
+parser.set_defaults(feature=False)
 args = parser.parse_args()
+
+ib=IB()
+if args.real: 
+    port=4001
+else:
+    port=4002
+ib.connect('127.0.0.1', port, clientId=1333)
 
 stockdict = csv.DictReader(open(args.file, "r"), fieldnames = ['ticker','price'])
 
 ib=IB()
 if args.real: 
-    port=4002
-else:
     port=4001
+else:
+    port=4002
 ib.connect('127.0.0.1', port, clientId=13)
 
-contracts = {Stock(row.ticker, exchange='SMART', currency='USD')}
-ib.qualifyContracts(contract)
+for row in stockdict:
+    row['contract']=Stock(row['ticker'], exchange='SMART', currency='USD')
+    ib.qualifyContracts(row['contract'])
+    quantity = cash_per_stock/int(row['price'])
+    buy_order=Order(action = 'BUY', orderType = 'LMT', totalQuantity = quantity , tif = 'OPG', lmtPrice=row['price'])
+    buy_trade = ib.placeOrder(row['contract'], buy_order)
+    sell_order=Order(action = 'SELL', orderType = 'MOC', totalQuantity = quantity )
+    sell_trade = ib.placeOrder(row['contract'], sell_order)
 
-buy_order=Order(action = 'BUY', orderType = 'MKT', totalQuantity = args.amount, tif = 'OPG')
-buy_trade = ib.placeOrder(contract, buy_order)
-
-sell_order=Order(action = 'SELL', orderType = 'MOC', totalQuantity = args.amount )
-sell_trade = ib.placeOrder(contract, sell_order)
-
-ib.sleep(1)
-print(buy_trade.log)
-print(sell_trade.log)
 ib.disconnect()
 
