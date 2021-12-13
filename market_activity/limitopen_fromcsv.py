@@ -1,5 +1,6 @@
 from ib_insync import *
 from connection import initiate
+from datetime import datetime, timedelta
 
 import argparse
 import csv
@@ -16,13 +17,13 @@ args = parser.parse_args()
 
 ib = initiate.initiate_ib(args, 13)
 
-stockdict = csv.DictReader(open(args.file, "r"), fieldnames = ['ticker','price'])
-
+stockdict = csv.DictReader(open(args.file, "r"))
 for row in stockdict:
-    row['contract']=Stock(row['ticker'], exchange='SMART', currency='USD')
+    assert(row['date']==datetime.today().strftime('%Y-%m-%d'))
+    row['contract']=Stock(row['symbol'], exchange='SMART', currency='USD')
     ib.qualifyContracts(row['contract'])
-    quantity = cash_per_stock/int(row['price'])
-    buy_order=Order(action = 'BUY', orderType = 'LMT', totalQuantity = quantity , tif = 'OPG', lmtPrice=row['price'])
+    quantity = int(cash_per_stock/float(row['purchase']))
+    buy_order=Order(action = 'BUY', orderType = 'LMT', totalQuantity = quantity , tif = 'OPG', lmtPrice=row['purchase'])
     buy_trade = ib.placeOrder(row['contract'], buy_order)
     sell_order=Order(action = 'SELL', orderType = 'MOC', totalQuantity = quantity )
     sell_trade = ib.placeOrder(row['contract'], sell_order)
