@@ -19,7 +19,7 @@ ib = initiate.initiate_ib(args, 13)
 
 stockdict = csv.DictReader(open(args.file, "r"))
 for row in stockdict:
-    assert(row['date']==datetime.today().strftime('%Y-%m-%d'))
+    assert(row['date']==(datetime.today()-timedelta(days=1)).strftime('%Y-%m-%d'))
     row['contract']=Stock(row['symbol'], exchange='SMART', currency='USD')
     ib.qualifyContracts(row['contract'])
     quantity = int(cash_per_stock/float(row['purchase']))
