@@ -22,7 +22,7 @@ for row in stockdict:
     assert(row['date']==(datetime.today()-timedelta(days=1)).strftime('%Y-%m-%d'))
     row['contract']=Stock(row['symbol'], exchange='SMART', currency='USD')
     ib.qualifyContracts(row['contract'])
-    quantity = int(cash_per_stock/float(row['purchase']))
+    quantity = int(cash_per_stock/float(row['close']))
     buy_order=Order(action = 'BUY', orderType = 'LMT', totalQuantity = quantity , tif = 'OPG', lmtPrice=row['buy'])
     buy_trade = ib.placeOrder(row['contract'], buy_order)
     sell_order=Order(action = 'SELL', orderType = 'LMT', totalQuantity = quantity, tif = 'OPG', lmtPrice=row['sell'] )
