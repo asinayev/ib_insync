@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import argparse
 import csv
 
-cash_per_stock = 1000
+cash_per_stock = 100
 
 # Instantiate the parser
 parser = argparse.ArgumentParser(description='limit buy stocks at listed limit prices on open and then sell at market close')
@@ -22,7 +22,7 @@ for row in stockdict:
     assert(row['date']==(datetime.today()-timedelta(days=1)).strftime('%Y-%m-%d'))
     row['contract']=Stock(row['symbol'], exchange='ISLAND', currency='USD')
     ib.qualifyContracts(row['contract'])
-    quantity = int(cash_per_stock/float(row['close']))
+    quantity = max(1, int(cash_per_stock/float(row['close'])))
     buy_order =Order(action = 'BUY',  orderType = 'LMT', totalQuantity = quantity, tif = 'OPG', lmtPrice=row['buy'])
     buy_trade = ib.placeOrder(row['contract'], buy_order)
     sell_order=Order(action = 'SELL', orderType = 'LMT', totalQuantity = quantity, tif = 'OPG', lmtPrice=row['sell'] )

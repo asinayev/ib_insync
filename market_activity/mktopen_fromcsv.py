@@ -4,7 +4,7 @@ from connection import initiate
 import argparse
 import csv
 
-cash_per_stock = 5000
+cash_per_stock = 10000
 
 # Instantiate the parser
 parser = argparse.ArgumentParser(description='market buy listed quantities of stocks at open and then sell at market close')
