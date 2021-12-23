@@ -34,7 +34,7 @@ for sym in corr_stock_tickers:
         ib.qualifyContracts(contr)
         if position.position>0:
             order =Order(action = 'SELL', orderType = 'MOC', totalQuantity = position.position )
-        if position.position==0:
+        elif position.position==0:
             print(sym+" already closed")
         else:
             order =Order(action = 'BUY', orderType = 'MOC', totalQuantity = -(position.position) )
