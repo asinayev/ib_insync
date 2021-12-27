@@ -13,8 +13,8 @@ parser.add_argument('--real', dest='real', action = 'store_true')
 parser.set_defaults(feature=False)
 args = parser.parse_args()
 
-corr_stocks = csv.DictReader(open(args.file, "r"))
-corr_stock_tickers = [row['symbol'] for row in corr_stocks]
+stocks = csv.DictReader(open(args.file, "r"))
+stock_tickers = [row['symbol'] for row in stocks]
 
 ib = initiate.initiate_ib(args, 14)
 # Cancel orders that did not execute intended for opening
@@ -27,7 +27,7 @@ for OtC in openOrders:
 openPositions = ib.positions()
 position_tickers = {p.contract.symbol:i for i,p in enumerate(openPositions)}
 
-for sym in corr_stock_tickers:
+for sym in stock_tickers:
     if sym in position_tickers:
         position = openPositions[position_tickers[sym]]
         contr = Stock(sym, exchange='ISLAND', currency='USD')
