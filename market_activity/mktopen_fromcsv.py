@@ -10,6 +10,7 @@ parser = argparse.ArgumentParser(description='market buy (or sell) listed quanti
 parser.add_argument('--file', type=str, required=True)
 parser.add_argument('--cash', type=float, required=True)
 parser.add_argument('--real', dest='real', action = 'store_true') 
+parser.add_argument('--autoclose', dest='autoclose', action = 'store_true') 
 parser.add_argument('--openaction', type=str, required=True, choices=['BUY','SELL']) 
 parser.set_defaults(short=False)
 args = parser.parse_args()
@@ -26,8 +27,9 @@ for row in stockdict:
     ib.qualifyContracts(row['contract'])
     open_order=Order(action = args.openaction, orderType = 'MKT', totalQuantity = row['quantity'] , tif = 'OPG' )
     open_trade = ib.placeOrder(row['contract'], open_order)
-    close_order=Order(action = closeaction, orderType = 'MOC', totalQuantity = row['quantity'] )
-    close_trade = ib.placeOrder(row['contract'], close_order)
+    if args.autoclose:
+        close_order=Order(action = closeaction, orderType = 'MOC', totalQuantity = row['quantity'] )
+        close_trade = ib.placeOrder(row['contract'], close_order)
 
 ib.disconnect()
 

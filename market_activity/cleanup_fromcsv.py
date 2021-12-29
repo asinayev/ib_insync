@@ -10,6 +10,7 @@ parser = argparse.ArgumentParser(description='cancel orders for unopened positio
 
 parser.add_argument('--file', type=str, required=True)
 parser.add_argument('--real', dest='real', action = 'store_true') 
+parser.add_argument('--limitclose', dest='limitclose', action = 'store_true') 
 parser.set_defaults(feature=False)
 args = parser.parse_args()
 
@@ -32,11 +33,11 @@ for sym in stock_tickers:
         position = openPositions[position_tickers[sym]]
         contr = Stock(sym, exchange='ISLAND', currency='USD')
         ib.qualifyContracts(contr)
-        if position.position>0:
+        if position.position>0 and args.limitclose:
+            order =Order(action = 'SELL', orderType = 'LOC', totalQuantity = position.position, lmtPrice = position.avgCost*0.97 )
+        elif position.position>0 and not limitclose:
             order =Order(action = 'SELL', orderType = 'MOC', totalQuantity = position.position )
-        elif position.position==0:
-            print(sym+" already closed")
-        else:
+        elif position.position<0:
             order =Order(action = 'BUY', orderType = 'MOC', totalQuantity = -(position.position) )
         ib.placeOrder(contr, order)
         print("ordering close for "+sym)
