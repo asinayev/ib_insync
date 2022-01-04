@@ -22,7 +22,7 @@ ib = initiate.initiate_ib(args, 15)
 stockdict = csv.DictReader(open(args.file, "r"))
 
 for row in stockdict:
-    row['contract']=Stock(row['ticker'], exchange='SMART', currency='USD')
+    row['contract']=Stock(row['symbol'], exchange='SMART', currency='USD')
     row['quantity']=round(args.cash/float(row['price']))
     ib.qualifyContracts(row['contract'])
     open_order=Order(action = args.openaction, orderType = 'MKT', totalQuantity = row['quantity'] , tif = 'OPG' )

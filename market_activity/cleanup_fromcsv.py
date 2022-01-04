@@ -34,8 +34,8 @@ for sym in stock_tickers:
         contr = Stock(sym, exchange='ISLAND', currency='USD')
         ib.qualifyContracts(contr)
         if position.position>0 and args.limitclose:
-            order =Order(action = 'SELL', orderType = 'LOC', totalQuantity = position.position, lmtPrice = position.avgCost*0.97 )
-        elif position.position>0 and not limitclose:
+            order =Order(action = 'SELL', orderType = 'LOC', totalQuantity = position.position, lmtPrice = round(position.avgCost*0.97,2) )
+        elif position.position>0 and not args.limitclose:
             order =Order(action = 'SELL', orderType = 'MOC', totalQuantity = position.position )
         elif position.position<0:
             order =Order(action = 'BUY', orderType = 'MOC', totalQuantity = -(position.position) )
