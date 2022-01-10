@@ -25,7 +25,10 @@ for row in stockdict:
     row['contract']=Stock(row['symbol'], exchange='SMART', currency='USD')
     row['quantity']=round(args.cash/float(row['price']))
     ib.qualifyContracts(row['contract'])
-    open_order=Order(action = args.openaction, orderType = 'MKT', totalQuantity = row['quantity'] , tif = 'OPG' )
+    if 'slow' in row and int(row['slow'])>0:
+        open_order=Order(action = 'BUY', orderType = 'MKT', totalQuantity = row['quantity'] , tif = 'DAY', algoStrategy='Adaptive', algoParams = [TagValue('adaptivePriority', 'Normal')])
+    else:
+        open_order=Order(action = args.openaction, orderType = 'MKT', totalQuantity = row['quantity'] , tif = 'OPG' )
     open_trade = ib.placeOrder(row['contract'], open_order)
     if args.autoclose:
         close_order=Order(action = closeaction, orderType = 'MOC', totalQuantity = row['quantity'] )
