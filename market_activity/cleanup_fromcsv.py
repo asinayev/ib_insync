@@ -24,7 +24,7 @@ for OtC in openOrders:
     if OtC.tif=='OPG':
         ib.cancelOrder(OtC)
 
-# Order positions from this strategy to be closed at market close
+# Order positions from this strategy to be closed 
 openPositions = ib.positions()
 position_tickers = {p.contract.symbol:i for i,p in enumerate(openPositions)}
 
