@@ -26,7 +26,7 @@ for row in stockdict:
     row['quantity']=round(args.cash/float(row['price']))
     ib.qualifyContracts(row['contract'])
     if row['quantity']*100 > float(row['volume']):
-        open_order=Order(action = 'BUY', orderType = 'MKT', totalQuantity = row['quantity'] , tif = 'DAY', algoStrategy='Adaptive', algoParams = [TagValue('adaptivePriority', 'Normal')])
+        open_order=Order(action = args.openaction, orderType = 'MKT', totalQuantity = row['quantity'] , tif = 'DAY', algoStrategy='Adaptive', algoParams = [TagValue('adaptivePriority', 'Normal')])
     else:
         open_order=Order(action = args.openaction, orderType = 'MKT', totalQuantity = row['quantity'] , tif = 'OPG' )
     open_trade = ib.placeOrder(row['contract'], open_order)
