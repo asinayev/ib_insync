@@ -26,7 +26,10 @@ for row in stockdict:
     row['quantity']=round(args.cash/float(row['price']))
     ib.qualifyContracts(row['contract'])
     if row['quantity']*100 > float(row['volume']):
-        open_order=Order(action = args.openaction, orderType = 'MKT', totalQuantity = row['quantity'] , tif = 'DAY', algoStrategy='Adaptive', algoParams = [TagValue('adaptivePriority', 'Normal')])
+        if row['quantity']*10 < float(row['volume']):
+            open_order=Order(action = args.openaction, orderType = 'MKT', totalQuantity = row['quantity'] , tif = 'DAY', algoStrategy='Adaptive', algoParams = [TagValue('adaptivePriority', 'Normal')])
+        else:
+            print("Stock "+row['symbol']+" trades less than 10x needed volume daily")
     else:
         open_order=Order(action = args.openaction, orderType = 'MKT', totalQuantity = row['quantity'] , tif = 'OPG' )
     open_trade = ib.placeOrder(row['contract'], open_order)
