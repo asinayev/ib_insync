@@ -20,10 +20,10 @@ for row in stockdict:
     row['contract']=Stock(row['symbol'], exchange='ISLAND', currency='USD')
     ib.qualifyContracts(row['contract'])
     quantity = max(1, int(args.cash/float(row['close'])))
-    if row['buy']>0:
+    if float(row['buy'])>0:
         buy_order =Order(action = 'BUY',  orderType = 'LMT', totalQuantity = quantity, tif = 'OPG', lmtPrice=row['buy'])
         buy_trade = ib.placeOrder(row['contract'], buy_order)
-    if row['sell']>0:
+    if float(row['sell'])>0:
         sell_order=Order(action = 'SELL', orderType = 'LMT', totalQuantity = quantity, tif = 'OPG', lmtPrice=row['sell'] )
         sell_trade = ib.placeOrder(row['contract'], sell_order)
 
