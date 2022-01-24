@@ -12,7 +12,7 @@ parser.add_argument('--file', type=str, required=True)
 #File needs columns:
 # symbol
 # action
-# strike_price
+# ttrike_price
 # order_type
 # time_in_force
 
@@ -34,13 +34,17 @@ for row in stockdict:
     else:
         ibkr_ordertype = row['order_type']
     row['contract']=Stock(row['symbol'], exchange='ISLAND', currency='USD')
-    row['quantity']=round(args.cash/float(row['strike_price']))
+    if row['strike_price']=='' or 'strike_price' not in row:
+        row['strike_price']=0.001
+    else:
+        row['strike_price']=float(row['strike_price'])
+    row['quantity']=round(args.cash/row['strike_price'])
     ib.qualifyContracts(row['contract'])
     this_order = Order(action = row['action'],  
-                        orderType = ibkr_ordertype', 
+                        orderType = ibkr_ordertype, 
                         totalQuantity = row['quantity'], 
                         tif = row['time_in_force'], 
-                        lmtPrice=row['strike_price'])
+                        lmtPrice=round(float(row['strike_price']),2))
     this_trade = ib.placeOrder(row['contract'], this_order)
 
 ib.disconnect()

@@ -11,6 +11,8 @@ parser = argparse.ArgumentParser(description='cancel orders for unopened positio
 parser.add_argument('--file', type=str, required=True)
 parser.add_argument('--real', dest='real', action = 'store_true') 
 parser.add_argument('--limitclose', dest='limitclose', action = 'store_true') 
+parser.add_argument('--ordertype', type=str, required=True, choices=['LOC','MOC','LMT','MKT']) 
+parser.add_argument('--timeinforce', type=str, required=True, choices=['OPG','DAY','none']) 
 parser.set_defaults(feature=False)
 args = parser.parse_args()
 
@@ -36,9 +38,9 @@ for sym in stock_tickers:
         if position.position>0 and args.limitclose:
             order =Order(action = 'SELL', orderType = 'LOC', totalQuantity = position.position, lmtPrice = round(position.avgCost*0.97,2) )
         elif position.position>0 and not args.limitclose:
-            order =Order(action = 'SELL', orderType = 'MOC', totalQuantity = position.position )
+            order =Order(action = 'SELL', orderType = args.ordertype, totalQuantity = position.position, tif = args.timeinforce  )
         elif position.position<0:
-            order =Order(action = 'BUY', orderType = 'MOC', totalQuantity = -(position.position) )
+            order =Order(action = 'BUY', orderType = args.ordertype, totalQuantity = -(position.position) , tif = args.timeinforce )
         ib.placeOrder(contr, order)
         print("ordering close for "+sym)
 
