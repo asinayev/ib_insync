@@ -34,8 +34,8 @@ for row in stockdict:
     else:
         ibkr_ordertype = row['order_type']
     row['contract']=Stock(row['symbol'], exchange='ISLAND', currency='USD')
-    if row['strike_price']=='' or 'strike_price' not in row:
-        row['strike_price']=0.001
+    if 'strike_price' not in row or row['strike_price']=='' :
+        row['strike_price']=float(row['close'])
     else:
         row['strike_price']=float(row['strike_price'])
     row['quantity']=round(args.cash/row['strike_price'])
