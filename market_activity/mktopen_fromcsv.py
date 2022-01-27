@@ -27,6 +27,7 @@ for row in stockdict:
     ib.qualifyContracts(row['contract'])
     if row['quantity']*100 > float(row['volume']):
         if row['quantity']*10 < float(row['volume']):
+            print("Stock "+row['symbol']+" trades between 10x and 100x needed volume daily. Will use adaptive order")
             open_order=Order(action = args.openaction, orderType = 'MKT', totalQuantity = row['quantity'] , tif = 'DAY', algoStrategy='Adaptive', algoParams = [TagValue('adaptivePriority', 'Normal')])
         else:
             print("Stock "+row['symbol']+" trades less than 10x needed volume daily")
