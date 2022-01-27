@@ -34,7 +34,11 @@ for row in stockdict:
     else:
         ibkr_ordertype = row['order_type']
     row['contract']=Stock(row['symbol'], exchange='ISLAND', currency='USD')
+    if 'strike_price' not in row and 'close' not in row:
+        print("Stock does not have strike price or close price: "+row['symbol'])
+        continue
     if 'strike_price' not in row or row['strike_price']=='' :
+        print("Setting strike price as close price: "+row['symbol'])
         row['strike_price']=float(row['close'])
     else:
         row['strike_price']=float(row['strike_price'])
