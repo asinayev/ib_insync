@@ -17,7 +17,7 @@ ib = initiate.initiate_ib(args, 133)
 
 stockdict = csv.DictReader(open(args.file, "r"))
 for row in stockdict:
-    row['contract']=Stock(row['symbol'], exchange='ISLAND', currency='USD')
+    row['contract']=Stock(row['symbol'], exchange='SMART', currency='USD')
     ib.qualifyContracts(row['contract'])
     quantity = max(1, int(args.cash/float(row['close'])))
     if float(row['buy'])>0:

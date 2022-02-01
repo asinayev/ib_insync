@@ -28,7 +28,7 @@ position_tickers = {p.contract.symbol:i for i,p in enumerate(openPositions)}
 for sym in position_tickers:
     if sym not in exception_tickers:
         position = openPositions[position_tickers[sym]]
-        contr = Stock(sym, exchange='ISLAND', currency='USD')
+        contr = Stock(sym, exchange='SMART', currency='USD')
         ib.qualifyContracts(contr)
         if position.position>0:
             order =Order(action = 'SELL', orderType = args.ordertype, totalQuantity = position.position, tif = args.timeinforce  )
