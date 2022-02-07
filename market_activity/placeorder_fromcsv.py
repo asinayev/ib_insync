@@ -34,7 +34,7 @@ for row in stockdict:
     else:
         ibkr_ordertype = row['order_type']
     row['contract']=Stock(row['symbol'], exchange='SMART', currency='USD')
-    if 'strike_price' not in row and 'close' not in row:
+    if ('strike_price' not in row or row['strike_price']=='') and 'close' not in row:
         print("Stock does not have strike price or close price: "+row['symbol'])
         continue
     if 'strike_price' not in row or row['strike_price']=='' :
@@ -44,6 +44,16 @@ for row in stockdict:
         row['strike_price']=float(row['strike_price'])
     row['quantity']=round(args.cash/row['strike_price'])
     ib.qualifyContracts(row['contract'])
+    test_order = Order(action = [200~row['action'],
+                        orderType = ibkr_ordertype,
+                        totalQuantity = row['quantity'],
+                        tif = row['time_in_force'],
+                        lmtPrice=round(float(row['strike_price']),2), 
+                        whatIf=True)
+    test_trade=ib.whatIfOrder(row['contract'], test_order)
+    if test_trade.maxCommission>max(args.cash/1000,2):
+        print("Trade costs are too high for"+row['symbol'])
+        continue
     this_order = Order(action = row['action'],  
                         orderType = ibkr_ordertype, 
                         totalQuantity = row['quantity'], 
