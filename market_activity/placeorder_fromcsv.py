@@ -44,14 +44,16 @@ for row in stockdict:
         row['strike_price']=float(row['strike_price'])
     row['quantity']=round(args.cash/row['strike_price'])
     ib.qualifyContracts(row['contract'])
-    test_order = Order(action = [200~row['action'],
-                        orderType = ibkr_ordertype,
+    test_order = Order(action = row['action'],
+                        orderType = 'MKT',
                         totalQuantity = row['quantity'],
-                        tif = row['time_in_force'],
-                        lmtPrice=round(float(row['strike_price']),2), 
                         whatIf=True)
     test_trade=ib.whatIfOrder(row['contract'], test_order)
-    if test_trade.maxCommission>max(args.cash/1000,2):
+    if type(test_trade)==list:
+        print("stock does not test"+row['symbol'])
+        continue
+    elif test_trade.maxCommission>max(args.cash/1000,2):
+        print(test_trade.maxCommission)
         print("Trade costs are too high for"+row['symbol'])
         continue
     this_order = Order(action = row['action'],  
