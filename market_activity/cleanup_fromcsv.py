@@ -33,7 +33,7 @@ position_tickers = {p.contract.symbol:i for i,p in enumerate(openPositions)}
 for sym in stock_tickers:
     if sym in position_tickers:
         position = openPositions[position_tickers[sym]]
-        contr = Stock(sym, exchange='ISLAND', currency='USD')
+        contr = Stock(sym, exchange='SMART', currency='USD')
         ib.qualifyContracts(contr)
         if position.position>0 and args.limitclose:
             print("Closing stock "+sym+" at .98 limit")
