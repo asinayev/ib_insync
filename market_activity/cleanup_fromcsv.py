@@ -21,17 +21,18 @@ stock_tickers = [row['symbol'] for row in stocks]
 
 ib = initiate.initiate_ib(args, 14)
 # Cancel orders that did not execute intended for opening
-openOrders = ib.openOrders()
-for OtC in openOrders:
-    if OtC.tif=='OPG':
-        ib.cancelOrder(OtC)
+openTrades = ib.openTrades()
+for OtC in openTrades:
+    if OtC.order.tif=='OPG':
+        ib.cancelOrder(OtC.order)
 
 # Order positions from this strategy to be closed 
 openPositions = ib.positions()
 position_tickers = {p.contract.symbol:i for i,p in enumerate(openPositions)}
+open_tickers = [t.contract.symbol for t in ib.openTrades()]
 
 for sym in stock_tickers:
-    if sym in position_tickers:
+    if sym in position_tickers and not sym in open_tickers:
         position = openPositions[position_tickers[sym]]
         contr = Stock(sym, exchange='SMART', currency='USD')
         ib.qualifyContracts(contr)
