@@ -2,6 +2,8 @@ from ib_insync import *
 from connection import initiate
 from datetime import datetime, timedelta
 
+import execution_flow
+import functools 
 import argparse
 import csv
 
@@ -44,24 +46,15 @@ for row in stockdict:
         row['strike_price']=float(row['strike_price'])
     row['quantity']=round(args.cash/row['strike_price'])
     ib.qualifyContracts(row['contract'])
-    test_order = Order(action = row['action'],
-                        orderType = 'MKT',
-                        totalQuantity = row['quantity'],
-                        whatIf=True)
-    test_trade=ib.whatIfOrder(row['contract'], test_order)
-    if type(test_trade)==list:
-        print("stock does not test"+row['symbol'])
-        continue
-    elif test_trade.maxCommission>max(args.cash/1000,2):
-        print(test_trade.maxCommission)
-        print("Trade costs are too high for"+row['symbol'])
-        continue
-    this_order = Order(action = row['action'],  
+    part_order = functools.partial(Order,
+                        action = row['action'],
                         orderType = ibkr_ordertype, 
                         totalQuantity = row['quantity'], 
                         tif = row['time_in_force'], 
                         lmtPrice=round(float(row['strike_price']),2))
-    this_trade = ib.placeOrder(row['contract'], this_order)
+    if not execution_flow.fee_too_high(order_preset=part_order, contract=row['contract'], 
+            ib_conn=ib, fee_limit=max(2,args.cash/1000)):
+        this_trade = ib.placeOrder(row['contract'], part_order())
 
 ib.disconnect()
 

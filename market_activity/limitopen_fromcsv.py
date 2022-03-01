@@ -3,6 +3,7 @@ from connection import initiate
 from datetime import datetime, timedelta
 
 import argparse
+import functools
 import csv
 
 # Instantiate the parser
@@ -16,28 +17,24 @@ args = parser.parse_args()
 ib = initiate.initiate_ib(args, 133)
 
 stockdict = csv.DictReader(open(args.file, "r"))
+
 for row in stockdict:
     row['contract']=Stock(row['symbol'], exchange='SMART', currency='USD')
     ib.qualifyContracts(row['contract'])
     quantity = max(1, int(args.cash/float(row['close'])))
+    limit_order = functools.partial(Order, orderType = 'LMT', totalQuantity = quantity, tif = 'OPG')
     if float(row['buy'])>0:
-        test_order = Order(action = 'BUY',
-                            orderType = 'LMT',
-                            totalQuantity = quantity,
-                            whatIf=True)
-        test_trade=ib.whatIfOrder(row['contract'], test_order)
-        if type(test_trade)==list:
-            print("stock does not test: "+row['symbol'])
-            continue
-        elif test_trade.maxCommission>max(args.cash/1000,2):
-            print(test_trade.maxCommission)
-            print("Trade costs are too high for"+row['symbol'])
-            continue
-        buy_order =Order(action = 'BUY',  orderType = 'LMT', totalQuantity = quantity, tif = 'OPG', lmtPrice=row['buy'])
-        buy_trade = ib.placeOrder(row['contract'], buy_order)
+        part_order = functools.partial(limit_order, action = 'BUY',  lmtPrice=row['buy'])
+        if not execution_flow.fee_too_high(
+                order_preset=part_order, contract=row['contract'], 
+                ib_conn=ib, fee_limit=max(2,args.cash/1000)):
+            buy_trade = ib.placeOrder(row['contract'], part_order())
     if float(row['sell'])>0:
-        sell_order=Order(action = 'SELL', orderType = 'LMT', totalQuantity = quantity, tif = 'OPG', lmtPrice=row['sell'] )
-        sell_trade = ib.placeOrder(row['contract'], sell_order)
+        part_order = functools.partial(limit_order, action = 'SELL',  lmtPrice=row['sell'])
+        if not execution_flow.fee_too_high(
+                order_preset=part_order, contract=row['contract'], 
+                ib_conn=ib, fee_limit=max(2,args.cash/1000)):
+            sell_trade = ib.placeOrder(row['contract'], part_order())
 
 ib.disconnect()
 
