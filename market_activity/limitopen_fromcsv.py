@@ -21,6 +21,18 @@ for row in stockdict:
     ib.qualifyContracts(row['contract'])
     quantity = max(1, int(args.cash/float(row['close'])))
     if float(row['buy'])>0:
+        test_order = Order(action = 'BUY',
+                            orderType = 'LMT',
+                            totalQuantity = quantity,
+                            whatIf=True)
+        test_trade=ib.whatIfOrder(row['contract'], test_order)
+        if type(test_trade)==list:
+            print("stock does not test: "+row['symbol'])
+            continue
+        elif test_trade.maxCommission>max(args.cash/1000,2):
+            print(test_trade.maxCommission)
+            print("Trade costs are too high for"+row['symbol'])
+            continue
         buy_order =Order(action = 'BUY',  orderType = 'LMT', totalQuantity = quantity, tif = 'OPG', lmtPrice=row['buy'])
         buy_trade = ib.placeOrder(row['contract'], buy_order)
     if float(row['sell'])>0:
