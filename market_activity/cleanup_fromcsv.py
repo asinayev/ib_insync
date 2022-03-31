@@ -13,11 +13,16 @@ parser.add_argument('--real', dest='real', action = 'store_true')
 parser.add_argument('--limitclose', dest='limitclose', action = 'store_true') 
 parser.add_argument('--ordertype', type=str, required=True, choices=['LOC','MOC','LMT','MKT']) 
 parser.add_argument('--timeinforce', type=str, required=True, choices=['OPG','DAY','none']) 
+parser.add_argument('--currentstatusfile', type=str, required=False) 
 parser.set_defaults(feature=False)
 args = parser.parse_args()
 
 stocks = csv.DictReader(open(args.file, "r"))
-stock_tickers = [row['symbol'] for row in stocks]
+stock_tickers = [row['symbol'] for row in stocks if 'perm' not in row or row['perm']!='T']
+
+if args.limitclose:
+    current_moves = csv.DictReader(open(args.currentstatusfile, "r"))
+    current_moves = {row['symbol']:row for row in current_moves}
 
 ib = initiate.initiate_ib(args, 14)
 # Cancel orders that did not execute intended for opening
@@ -37,8 +42,11 @@ for sym in stock_tickers:
         contr = Stock(sym, exchange='SMART', currency='USD')
         ib.qualifyContracts(contr)
         if position.position>0 and args.limitclose:
-            print("Closing stock "+sym+" at .98 limit")
-            order =Order(action = 'SELL', orderType = 'LOC', totalQuantity = position.position, lmtPrice = round(position.avgCost*0.98,2) )
+            if sym in current_moves:
+                print("Closing stock "+sym+" at previous high")
+                order =Order(action = 'SELL', orderType = 'LOC', totalQuantity = position.position, lmtPrice = round(float(current_moves[sym]["high"]),2) )
+            else:
+                print("Stock "+sym+" does not have current data. CLOSE MANUALLY")
         elif position.position>0 and not args.limitclose:
             order =Order(action = 'SELL', orderType = args.ordertype, totalQuantity = position.position, tif = args.timeinforce  )
         elif position.position<0:

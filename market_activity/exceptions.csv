@@ -1,7 +1,8 @@
-symbol,price,volume
-VGLT,1,1
-VTI,1,1
-VGIT,1,1
-BAR,1,1
-FUTY,1,1
-UA,1,1
+symbol,perm
+VGLT,T
+VTI,T
+VGIT,T
+BAR,T
+FUTY,T
+MJ,F
+SILJ,F

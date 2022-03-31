@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import argparse
 import functools
 import csv
+import execution_flow
 
 # Instantiate the parser
 parser = argparse.ArgumentParser(description='limit buy stocks at listed limit prices on open and then sell at market close')

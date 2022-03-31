@@ -22,7 +22,7 @@ parser.add_argument('--real', dest='real', action = 'store_true')
 parser.add_argument('--cash', type=int, required=True)
 args = parser.parse_args()
 
-ib = initiate.initiate_ib(args, 133) 
+ib = initiate.initiate_ib(args, 14) 
 
 stockdict = csv.DictReader(open(args.file, "r"))
 for row in stockdict:
