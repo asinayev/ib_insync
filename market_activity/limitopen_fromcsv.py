@@ -28,13 +28,13 @@ for row in stockdict:
         part_order = functools.partial(limit_order, action = 'BUY',  lmtPrice=row['buy'])
         if not execution_flow.fee_too_high(
                 order_preset=part_order, contract=row['contract'], 
-                ib_conn=ib, fee_limit=max(2,args.cash/1000)):
+                ib_conn=ib, fee_limit=max(2,args.cash/300)):
             buy_trade = ib.placeOrder(row['contract'], part_order())
     if float(row['sell'])>0:
         part_order = functools.partial(limit_order, action = 'SELL',  lmtPrice=row['sell'])
         if not execution_flow.fee_too_high(
                 order_preset=part_order, contract=row['contract'], 
-                ib_conn=ib, fee_limit=max(2,args.cash/1000)):
+                ib_conn=ib, fee_limit=max(2,args.cash/300)):
             sell_trade = ib.placeOrder(row['contract'], part_order())
 
 ib.disconnect()
