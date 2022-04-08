@@ -20,6 +20,7 @@ parser.add_argument('--file', type=str, required=True)
 
 parser.add_argument('--real', dest='real', action = 'store_true') 
 parser.add_argument('--cash', type=int, required=True)
+parser.add_argument('--minprice', type=float, required=True)
 args = parser.parse_args()
 
 ib = initiate.initiate_ib(args, 14) 
@@ -54,7 +55,7 @@ for row in stockdict:
                         lmtPrice=round(float(row['strike_price']),2))
     #if not execution_flow.fee_too_high(order_preset=part_order, contract=row['contract'], 
     #        ib_conn=ib, fee_limit=max(2,args.cash/1000)):
-    if row['strike_price']>10:
+    if row['strike_price']>args.minprice:
         this_trade = ib.placeOrder(row['contract'], part_order())
 
 ib.disconnect()
