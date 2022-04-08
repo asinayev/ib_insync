@@ -52,8 +52,9 @@ for row in stockdict:
                         totalQuantity = row['quantity'], 
                         tif = row['time_in_force'], 
                         lmtPrice=round(float(row['strike_price']),2))
-    if not execution_flow.fee_too_high(order_preset=part_order, contract=row['contract'], 
-            ib_conn=ib, fee_limit=max(2,args.cash/1000)):
+    #if not execution_flow.fee_too_high(order_preset=part_order, contract=row['contract'], 
+    #        ib_conn=ib, fee_limit=max(2,args.cash/1000)):
+    if row['strike_price']>10:
         this_trade = ib.placeOrder(row['contract'], part_order())
 
 ib.disconnect()

@@ -4,7 +4,7 @@ def fee_too_high(order_preset, contract, ib_conn, fee_limit):
     if type(test_trade)==list:
         return(False)
     else:
-        if test_trade.maxCommission>fee_limit:
+        if test_trade.maxCommission<fee_limit:
             print("PASS:", contract.symbol, "at", test_trade.maxCommission)
             return True
         else:
