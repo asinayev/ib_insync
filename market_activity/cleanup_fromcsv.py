@@ -47,6 +47,7 @@ for sym in stock_tickers:
                 order =Order(action = 'SELL', orderType = 'LOC', totalQuantity = position.position, lmtPrice = round(float(current_moves[sym]["high"]),2) )
             else:
                 print("Stock "+sym+" does not have current data. CLOSE MANUALLY")
+                continue 
         elif position.position>0 and not args.limitclose:
             order =Order(action = 'SELL', orderType = args.ordertype, totalQuantity = position.position, tif = args.timeinforce  )
         elif position.position<0:
