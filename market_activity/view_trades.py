@@ -13,7 +13,7 @@ args = parser.parse_args()
 
 ib = initiate.initiate_ib(args, 14)
 
-x = [[date.today().strftime("%m/%d/%Y"), t.contract.localSymbol, t.order.action,str(t.orderStatus.avgFillPrice),str(t.order.totalQuantity),t.orderStatus.status] for t in ib.trades() ] 
+x = [[date.today().strftime("%m/%d/%Y"), t.contract.localSymbol, t.order.action,str(t.fills[0].execution.price),str(t.fills[0].execution.shares),str(t.orderStatus.status), str(len(t.fills))] for t in ib.trades() if len(t.fills)>0 ] 
 for t in x:
     if t[2]=='BUY':
         t[2]=t[3]
