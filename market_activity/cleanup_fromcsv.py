@@ -58,7 +58,11 @@ for sym in stock_tickers:
                         tif = tif,
                         conditions = [])
         if actual_order_type=='MIDPRICE':
-            part_order=functools.partial(part_order, conditions=[TimeCondition(isMore=True, time=datetime.today().strftime('%Y%m%d')+' 15:50:00 EST', conjunction='a')])
+            if ord_action=="BUY":
+                lmt_price=round(float(position.avgCost*3),2)
+            else:
+                lmt_price=round(float(position.avgCost/3),2)
+            part_order=functools.partial(part_order, lmtPrice=lmt_price, conditions=[TimeCondition(isMore=True, time=datetime.today().strftime('%Y%m%d')+' 15:50:00 EST', conjunction='a')])
         if args.closetype=='last_high_eod':
             if sym not in current_moves:
                 print("Stock "+sym+" does not have current data. CLOSE MANUALLY")
@@ -67,7 +71,6 @@ for sym in stock_tickers:
             if ord_action=='SELL':
                 order =part_order(lmtPrice = round(float(current_moves[sym]["high"]),2) )
             else:
-                order = part_order(lmtPrice=round(float(current_moves[sym]["high"]),2)*2)#no limit 
                 order.conditions.append(
                     PriceCondition(1,conjunction='a', isMore=True,
                         price=round(float(current_moves[sym]["high"]),2), 
