@@ -6,7 +6,7 @@ import argparse
 import csv
 
 # Instantiate the parser
-parser = argparse.ArgumentParser(description='cancel orders for unopened positions and order closes for opened positions')
+parser = argparse.ArgumentParser(description='order closes for opened positions')
 
 parser.add_argument('--file', type=str, required=True)
 parser.add_argument('--real', dest='real', action = 'store_true') 
@@ -68,9 +68,8 @@ for sym in stock_tickers:
                 print("Stock "+sym+" does not have current data. CLOSE MANUALLY")
                 continue 
             print("Closing stock "+sym+" at previous high")
-            if ord_action=='SELL':
-                order =part_order(lmtPrice = round(float(current_moves[sym]["high"]),2) )
-            else:
+            order =part_order(lmtPrice = round(float(current_moves[sym]["high"]),2) )
+            if ord_action=='BUY':
                 order.conditions.append(
                     PriceCondition(1,conjunction='a', isMore=True,
                         price=round(float(current_moves[sym]["high"]),2), 
