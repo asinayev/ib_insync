@@ -24,7 +24,7 @@ trade_info = [[date.today().strftime("%m/%d/%Y"),
         t.order.action,
         str(t.fills[0].execution.price),
         '',
-        str(t.fills[0].execution.shares),
+        str(sum([f.execution.shares for f in t.fills])),
         str(t.orderStatus.status), 
         str(len(t.fills)), 
         str(t.fills[0].execution.time)] for t in ib.trades() if len(t.fills)>0 ] 
@@ -34,6 +34,7 @@ for t in trade_info:
         t[3]=''
     else:
         t[2]=''
+
     for order,stocks in order_stocks.items():
         if any(stocks==t[1]):
             t[4]=order
