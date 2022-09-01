@@ -33,7 +33,7 @@ openPositions = ib.positions()
 position_tickers = {p.contract.symbol:i for i,p in enumerate(openPositions)}
 open_tickers = [t.contract.symbol for t in ib.openTrades()]
 
-def order_conditions(args, position, lmt_price=None, contr):
+def order_conditions(args, position, lmt_price=None, contr=None):
     time_condition = TimeCondition(isMore=True, time=datetime.today().strftime('%Y%m%d')+' 15:50:00 EST', conjunction='a')
     price_condition = PriceCondition(1,conjunction='a', isMore=True,
                         price=lmt_price, 
