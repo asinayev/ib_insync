@@ -98,7 +98,7 @@ for sym in stock_tickers:
                 print("Stock "+sym+" does not have current data. CLOSE MANUALLY")
                 continue 
             print("Closing stock "+sym+" at previous high")
-            order=order_conditions(args, position=position.position, lmtPrice = round(float(current_moves[sym]["high"]),2), contr=contr)
+            order=order_conditions(args, position=position.position, lmt_price = round(float(current_moves[sym]["high"]),2), contr=contr)
         else:
             order=order_conditions(args, position=position.position, contr=contr)
         ib.placeOrder(contr, order)
