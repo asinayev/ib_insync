@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import functools
 import argparse
 import csv
+import time
 
 # Instantiate the parser
 parser = argparse.ArgumentParser(description='order closes for opened positions')
@@ -101,7 +102,9 @@ for sym in stock_tickers:
             order=order_conditions(args, position=position.position, lmt_price = round(float(current_moves[sym]["high"]),2), contr=contr)
         else:
             order=order_conditions(args, position=position.position, contr=contr)
-        ib.placeOrder(contr, order)
+        tr = ib.placeOrder(contr, order)
+        print(tr)
+        time.sleep(3)
         print("ordering close for "+sym)
 
 ib.disconnect()
