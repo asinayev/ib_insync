@@ -21,11 +21,23 @@ parser.add_argument('--file', type=str, required=True)
 parser.add_argument('--real', dest='real', action = 'store_true') 
 parser.add_argument('--cash', type=int, required=True)
 parser.add_argument('--minprice', type=float, required=True)
+arser.add_argument('--minspymove', type=float, required=False)
+arser.add_argument('--maxspymove', type=float, required=False)
+
+parser.add_argument('--spyfile', type=str, required=False)
+#File needs columns:
+# symbol
+
 args = parser.parse_args()
 
 ib = initiate.initiate_ib(args, 14) 
 
 stockdict = csv.DictReader(open(args.file, "r"))
+if 'minspymove' in args or 'maxspymove' in args:
+    spy = csv.DictReader(open(args.file, "r"))[0]
+    if 'minspymove' in args and spy.var < args.minspymove:
+        continue
+
 for row in stockdict:
     if row['time_in_force']=='close':
         if row['order_type'] == 'MKT':
