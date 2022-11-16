@@ -30,47 +30,50 @@ parser.add_argument('--spyfile', type=str, required=False)
 
 args = parser.parse_args()
 
+SPY_issue=None
 if args.minspymove or args.maxspymove:
     spy = next(csv.DictReader(open(args.spyfile, "r")))
     if args.minspymove and float(spy['todaysChangePerc']) < float(args.minspymove):
-        raise ValueError('SPY moved too low.')
+        SPY_issue = 'SPY moved too low.'
     if args.maxspymove and float(spy['todaysChangePerc']) > float(args.maxspymove):
-        raise ValueError('SPY moved too high.')
+        SPY_issue = 'SPY moved too high.'
 
-ib = initiate.initiate_ib(args, 14) 
-stockdict = csv.DictReader(open(args.file, "r"))
-
-for row in stockdict:
-    if row['time_in_force']=='close':
-        if row['order_type'] == 'MKT':
-            ibkr_ordertype = 'MOC'
-        if row['order_type'] == 'LMT':
-            ibkr_ordertype = 'LOC'
+if SPY_issue:
+    print(SPY_issue)
+else:
+    ib = initiate.initiate_ib(args, 14) 
+    stockdict = csv.DictReader(open(args.file, "r"))
+    for row in stockdict:
+        if row['time_in_force']=='close':
+            if row['order_type'] == 'MKT':
+                ibkr_ordertype = 'MOC'
+            elif row['order_type'] == 'LMT':
+                ibkr_ordertype = 'LOC'
+            else:
+                ibkr_ordertype = row['order_type']
         else:
             ibkr_ordertype = row['order_type']
-    else:
-        ibkr_ordertype = row['order_type']
-    row['contract']=Stock(row['symbol'], exchange='SMART', currency='USD')
-    if ('strike_price' not in row or row['strike_price']=='') and 'close' not in row:
-        print("Stock does not have strike price or close price: "+row['symbol'])
-        continue
-    if 'strike_price' not in row or row['strike_price']=='' :
-        print("Setting strike price as close price: "+row['symbol'])
-        row['strike_price']=float(row['close'])
-    else:
-        row['strike_price']=float(row['strike_price'])
-    row['quantity']=round(args.cash/row['strike_price'])
-    ib.qualifyContracts(row['contract'])
-    part_order = functools.partial(Order,
-                        action = row['action'],
-                        orderType = ibkr_ordertype, 
-                        totalQuantity = row['quantity'], 
-                        tif = row['time_in_force'], 
-                        lmtPrice=round(float(row['strike_price']),2))
-    #if not execution_flow.fee_too_high(order_preset=part_order, contract=row['contract'], 
-    #        ib_conn=ib, fee_limit=max(2,args.cash/1000)):
-    if row['strike_price']>args.minprice:
-        this_trade = ib.placeOrder(row['contract'], part_order())
+        row['contract']=Stock(row['symbol'], exchange='SMART', currency='USD')
+        if ('strike_price' not in row or row['strike_price']=='') and 'close' not in row:
+            print("Stock does not have strike price or close price: "+row['symbol'])
+            continue
+        if 'strike_price' not in row or row['strike_price']=='' :
+            print("Setting strike price as close price: "+row['symbol'])
+            row['strike_price']=float(row['close'])
+        else:
+            row['strike_price']=float(row['strike_price'])
+        row['quantity']=round(args.cash/row['strike_price'])
+        ib.qualifyContracts(row['contract'])
+        part_order = functools.partial(Order,
+                            action = row['action'],
+                            orderType = ibkr_ordertype, 
+                            totalQuantity = row['quantity'], 
+                            tif = row['time_in_force'], 
+                            lmtPrice=round(float(row['strike_price']),2))
+        #if not execution_flow.fee_too_high(order_preset=part_order, contract=row['contract'], 
+        #        ib_conn=ib, fee_limit=max(2,args.cash/1000)):
+        if row['strike_price']>args.minprice:
+            this_trade = ib.placeOrder(row['contract'], part_order())
 
-ib.disconnect()
+    ib.disconnect()
 

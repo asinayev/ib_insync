@@ -21,9 +21,9 @@ asset_tickers = [row['symbol'] for row in stockdict]
 openPositions = ib.positions()
 position_tickers = {p.contract.symbol:i for i,p in enumerate(openPositions)}
 
-issues = [ticker+" is repeated "+str(count)+" times" for ticker,count in Counter(asset_tickers).items() if count>1]
-issues +=[ticker+" appears in asset file but is not held" for ticker in asset_tickers if ticker not in position_tickers]
-issues +=[ticker+" is held but does not appear in asset file" for ticker in position_tickers if ticker not in asset_tickers]
+issues = ["Repeated "+str(count)+" times in asset file: "+ticker for ticker,count in Counter(asset_tickers).items() if count>1]
+issues +=["In asset file but is not held: "+ticker for ticker in asset_tickers if ticker not in position_tickers]
+issues +=["Held but absent from asset file: "+ticker for ticker in position_tickers if ticker not in asset_tickers]
 
 print(*issues, sep = "\n")
 
