@@ -34,9 +34,9 @@ SPY_issue=None
 if args.minspymove or args.maxspymove:
     spy = next(csv.DictReader(open(args.spyfile, "r")))
     if args.minspymove and float(spy['todaysChangePerc']) < float(args.minspymove):
-        SPY_issue = 'SPY moved too low for \n'+args.spyfile
+        SPY_issue = 'SPY moved too low for \n'+args.file
     if args.maxspymove and float(spy['todaysChangePerc']) > float(args.maxspymove):
-        SPY_issue = 'SPY moved too high for \n'+args.spyfile
+        SPY_issue = 'SPY moved too high for \n'+args.file
 
 if SPY_issue:
     print(SPY_issue)
