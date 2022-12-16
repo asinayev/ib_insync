@@ -41,6 +41,7 @@ if args.minspymove or args.maxspymove:
 if SPY_issue:
     print(SPY_issue)
 else:
+    print("Executing "+args.file)
     ib = initiate.initiate_ib(args, 14) 
     stockdict = csv.DictReader(open(args.file, "r"))
     for row in stockdict:
@@ -62,6 +63,7 @@ else:
             row['strike_price']=float(row['close'])
         else:
             row['strike_price']=float(row['strike_price'])
+            print("Setting strike price : "+row['symbol'])
         row['quantity']=round(args.cash/row['strike_price'])
         ib.qualifyContracts(row['contract'])
         part_order = functools.partial(Order,
