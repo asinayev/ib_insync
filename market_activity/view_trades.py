@@ -29,13 +29,25 @@ opens = [[date.today().strftime("%m/%d/%Y"),
         str(len(t.fills)), 
         str(t.fills[0].execution.time)] for t in ib.trades() 
         if len(t.fills)>0 and all([f.commissionReport.realizedPNL==0 for f in t.fills])] 
-closes = {t.contract.localSymbol:t.fills[0].execution.price for t in ib.trades()if (len(t.fills)>0 and any([f.commissionReport.realizedPNL!=0 for f in t.fills]))}
+closes = {t.contract.localSymbol:
+        [date.today().strftime("%m/%d/%Y"), 
+        t.contract.localSymbol, 
+        t.order.action,
+        str(t.fills[0].execution.price),
+        '',
+        str(sum([f.execution.shares for f in t.fills])),
+        str(t.orderStatus.status), 
+        str(len(t.fills)), 
+        str(t.fills[0].execution.time)] for t in ib.trades() 
+        if len(t.fills)>0 and any([f.commissionReport.realizedPNL!=0 for f in t.fills])}
 
 for t in opens:
     if t[1] in closes:
-        close_price = str(closes[t[1]])
+        close_price = str(closes[t[1]][3])
     else:
         close_price = ""
+    if t[1] in closes and t[5]<closes[t[1]][5]:
+        t+=['more closed than opened']
     if t[2]=='BUY':
         t[2]=str(t[3])
         t[3]=str(close_price)
