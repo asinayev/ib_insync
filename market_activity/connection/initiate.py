@@ -6,5 +6,5 @@ def initiate_ib(args, cid):
         port=4001
     else:
         port=4002
-    ib.connect('127.0.0.1', port, clientId=cid)
+    ib.connect('127.0.0.1', port, clientId=cid, timeout=15)
     return ib
