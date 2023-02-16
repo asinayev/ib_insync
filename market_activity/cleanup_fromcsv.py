@@ -107,5 +107,7 @@ for sym in stock_tickers:
         time.sleep(3)
         print("ordering close for "+sym)
 
-ib.disconnect()
+while ib.isConnected():
+    ib.disconnect()
+    ib.waitOnUpdate(timeout=.3)
 

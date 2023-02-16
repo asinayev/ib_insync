@@ -76,6 +76,7 @@ else:
         #        ib_conn=ib, fee_limit=max(2,args.cash/1000)):
         if row['strike_price']>args.minprice:
             this_trade = ib.placeOrder(row['contract'], part_order())
-
-    ib.disconnect()
+    while ib.isConnected():
+        ib.disconnect()
+        ib.waitOnUpdate(timeout=.3)
 
