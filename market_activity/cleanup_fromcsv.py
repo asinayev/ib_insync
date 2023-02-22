@@ -5,6 +5,7 @@ import functools
 import argparse
 import csv
 import time
+import re
 
 # Instantiate the parser
 parser = argparse.ArgumentParser(description='order closes for opened positions')
@@ -24,6 +25,11 @@ stock_tickers = [row['symbol'] for row in stocks if 'asset_type' not in row or r
 
 current_moves = csv.DictReader(open(args.currentstatusfile, "r"))
 current_moves = {row['symbol']:row for row in current_moves}
+addtnl_moves = {}
+for sym in current_moves:
+    if not sym.isalnum():
+        addtnl_moves[re.sub('[^0-9a-zA-Z]+', ' ', sym)]=current_moves[sym]
+current_moves.update(addtnl_moves)
 
 # Open connection
 ib = initiate.initiate_ib(args, 14)
@@ -90,6 +96,7 @@ def order_conditions(args, position, lmt_price=None, contr=None):
                      tif = None)
      
 for sym in stock_tickers:
+    print('starting close')
     if sym in position_tickers and not sym in open_tickers:
         position = openPositions[position_tickers[sym]]
         contr = Stock(sym, exchange='SMART', currency='USD')
