@@ -12,16 +12,15 @@ parser = argparse.ArgumentParser(description='order closes for opened positions'
 
 parser.add_argument('--file', type=str, required=True)
 parser.add_argument('--real', dest='real', action = 'store_true') 
-parser.add_argument('--closetype', type=str, required=True, choices=['last_high_eod','mkt_eod']) 
-parser.add_argument('--illiquid', dest='illiquid', action='store_true') 
+parser.add_argument('--closetype', type=str, required=True, choices=['last_high_eod','mkt_eod'])
+parser.add_argument('--illiquid', dest='illiquid', action='store_true')
 parser.add_argument('--currentstatusfile', type=str, required=False) 
-parser.add_argument('--assettype', type=str, required=False) 
 parser.set_defaults(feature=False)
 args = parser.parse_args()
 
 # Import data
 stocks = csv.DictReader(open(args.file, "r"))
-stock_tickers = [row['symbol'] for row in stocks if 'asset_type' not in row or row['asset_type']==args.assettype]
+stock_tickers = [row['symbol'] for row in stocks if 'close_type' not in row or row['close_type']==args.closetype]
 
 current_moves = csv.DictReader(open(args.currentstatusfile, "r"))
 current_moves = {row['symbol']:row for row in current_moves}
