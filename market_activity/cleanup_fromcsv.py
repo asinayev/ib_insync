@@ -20,7 +20,9 @@ args = parser.parse_args()
 
 # Import data
 stocks = csv.DictReader(open(args.file, "r"))
-stock_tickers = [row['symbol'] for row in stocks if 'close_type' not in row or row['close_type']==args.closetype]
+stock_tickers = [row['symbol'] for row in stocks \\
+                     if 'close_type' not in row or \\
+                         (row['close_type']==args.closetype and bool(int(row['liquid'])) is not args.illiquid)]
 
 current_moves = csv.DictReader(open(args.currentstatusfile, "r"))
 current_moves = {row['symbol']:row for row in current_moves}
