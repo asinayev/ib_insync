@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser(description='order closes for opened positions'
 
 parser.add_argument('--file', type=str, required=True)
 parser.add_argument('--real', dest='real', action = 'store_true') 
-parser.add_argument('--closetype', type=str, required=True, choices=['last_high_eod','mkt_eod'])
+parser.add_argument('--closetype', type=str, required=True, choices=['last_high_eod','mkt_eod','low_close_moo'])
 parser.add_argument('--illiquid', dest='illiquid', action='store_true')
 parser.add_argument('--currentstatusfile', type=str, required=False) 
 parser.set_defaults(feature=False)
@@ -95,6 +95,18 @@ def order_conditions(args, position, lmt_price=None, contr=None):
                      orderType="MOC",
                      totalQuantity = abs(position), 
                      tif = None)
+    elif not args.illiquid and args.closetype=='low_close_moo' and position<0:
+        return Order(action="BUY",
+                     orderType="MKT",
+                     totalQuantity = abs(position), 
+                     tif = "OPG")
+    elif args.illiquid and args.closetype=='low_close_moo' and position<0:
+        return Order(action="BUY",
+                     orderType="MKT",
+                     algoStrategy='Adaptive', 
+                     algoParams = [TagValue('adaptivePriority', 'Patient')],
+                     totalQuantity = abs(position), 
+                     tif = "DAY", )
      
 for sym in stock_tickers:
     print('starting close')
@@ -110,6 +122,11 @@ for sym in stock_tickers:
             order=order_conditions(args, position=position.position, lmt_price = round(float(current_moves[sym]["high"]),2), contr=contr)
         else:
             order=order_conditions(args, position=position.position, contr=contr)
+        if args.closetype=='low_close_moo':
+            if float(current_moves[sym]["close"])<float(current_moves[sym]["low"])+.2*(float(current_moves[sym]["high"])-float(current_moves[sym]["low"])):
+              order=order_conditions(args, position=position.position, contr=contr)
+            else:
+              continue
         tr = ib.placeOrder(contr, order)
         print(tr)
         time.sleep(3)
