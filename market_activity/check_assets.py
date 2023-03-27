@@ -29,8 +29,8 @@ for row in stockdict:
 openPositions = ib.positions()
 position_tickers = {p.contract.symbol:i for i,p in enumerate(openPositions)}
 
-issues +=["In asset file but is not held: "+ticker for ticker in asset_tickers if ticker not in position_tickers]
-issues +=["Held but absent from asset file: "+ticker for ticker in position_tickers if ticker not in asset_tickers]
+issues +=["In asset file but is not held: "+ticker for ticker in close_types if ticker not in position_tickers]
+issues +=["Held but absent from asset file: "+ticker for ticker in position_tickers if ticker not in close_types]
 
 if issues:
     print(*issues, sep = "\n")
