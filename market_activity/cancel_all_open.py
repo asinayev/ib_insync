@@ -19,7 +19,8 @@ x = ib.openOrders()
 print(len(x))
 for OtC in x: 
     print(OtC)
-    ib.cancelOrder(OtC)
+    if not args.justprint:
+        ib.cancelOrder(OtC)
 ib.disconnect()
 
 
