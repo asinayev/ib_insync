@@ -9,13 +9,15 @@ from collections import Counter
 parser = argparse.ArgumentParser(description='check for issues with asset file')
 
 parser.add_argument('--file', type=str, required=True)
-parser.add_argument('--real', dest='real', action = 'store_true') 
+parser.add_argument('--real', dest='real', action = 'store_true')
+parser.add_argument('--currentstatusfile', type=str, required=True)
 
 args = parser.parse_args()
 
 ib = initiate.initiate_ib(args, 133) 
 
 stockdict = csv.DictReader(open(args.file, "r"))
+current_status = csv.DictReader(open(args.currentstatusfile, "r"))
 close_types={}
 liquidities={}
 issues = []
@@ -42,7 +44,10 @@ if issues:
                 correct_asset_file[ticker]='low_close_moo'
             else:
                 correct_asset_file[ticker]='last_high_eod'
-            liquidities[ticker]='UNKNOWN' #TODO: fill this with liquidity based on volume
+            liquidities[ticker]='UNKNOWN'
+            for row in current_status_file:
+                if row['symbol']==ticker and int(row['volume'])>150000:
+                    liquidities['ticker']=1
     print(*[t+','+correct_asset_file[t]+','+liquidities[t] for t in correct_asset_file],sep="\n")
 
 ib.disconnect()
