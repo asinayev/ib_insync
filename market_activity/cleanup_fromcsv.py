@@ -96,7 +96,7 @@ def order_conditions(args, position, lmt_price=None, contr=None):
                      tif = None)
      
 for sym in stock_tickers:
-    print('starting close')
+    print('starting close '+sym)
     if sym in position_tickers and not sym in open_tickers:
         position = openPositions[position_tickers[sym]]
         contr = Stock(sym, exchange='SMART', currency='USD')
