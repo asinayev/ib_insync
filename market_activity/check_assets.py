@@ -38,7 +38,10 @@ if issues:
     correct_asset_file={sym:close_types[sym] for sym in close_types if sym in position_tickers}
     for ticker in position_tickers: 
         if ticker not in close_types:
-            correct_asset_file[ticker]='UNKNOWN' #TODO: fill this with order type based on whether position is short
+            if position_tickers[ticker]<0:
+                correct_asset_file[ticker]='low_close_moo'
+            else:
+                correct_asset_file[ticker]='last_high_eod'
             liquidities[ticker]='UNKNOWN' #TODO: fill this with liquidity based on volume
     print(*[t+','+correct_asset_file[t]+','+liquidities[t] for t in correct_asset_file],sep="\n")
 
