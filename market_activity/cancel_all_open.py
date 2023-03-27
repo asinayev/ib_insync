@@ -7,6 +7,7 @@ import argparse
 parser = argparse.ArgumentParser(description='Cancel all open orders')
 
 parser.add_argument('--real', dest='real', action = 'store_true') 
+parser.add_argument('--justprint', dest='justprint', action='store_true')
 parser.set_defaults(feature=False)
 args = parser.parse_args()
 

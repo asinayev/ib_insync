@@ -17,7 +17,6 @@ args = parser.parse_args()
 ib = initiate.initiate_ib(args, 133) 
 
 stockdict = csv.DictReader(open(args.file, "r"))
-current_status = csv.DictReader(open(args.currentstatusfile, "r"))
 close_types={}
 liquidities={}
 issues = []
@@ -45,9 +44,10 @@ if issues:
             else:
                 correct_asset_file[ticker]='last_high_eod'
             liquidities[ticker]='UNKNOWN'
-            for row in current_status_file:
+            current_status=csv.DictReader(open(args.currentstatusfile, "r"))
+            for row in current_status:
                 if row['symbol']==ticker and int(row['volume'])>150000:
-                    liquidities['ticker']=1
+                    liquidities[ticker]='1'
     print(*[t+','+correct_asset_file[t]+','+liquidities[t] for t in correct_asset_file],sep="\n")
 
 ib.disconnect()
