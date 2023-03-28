@@ -14,7 +14,8 @@ def check_asset_file(args):
     issues+=repeating_symbol_issues
     if issues:
         print(*issues, sep="\n")
-        print_correct_asset_file(close_types, position_tickers, liquidities, args)
+        current_status_list = list(csv.DictReader(open(args.current_status_file, "r")))
+        print_correct_asset_file(close_types, position_tickers, liquidities, current_status_list)
     ib.disconnect()
 
 def extract_close_types_and_liquidities(stock_dict):
@@ -39,18 +40,19 @@ def find_issues(close_types, position_tickers):
             issues.append(f"Held but absent from asset file: {ticker}")
     return issues
 
-def print_correct_asset_file(close_types, position_tickers, liquidities, args):
+def print_correct_asset_file(close_types, position_tickers, liquidities, current_status_list):
     print("Correct asset file:\n")
+    # starts as the input asset file without the repetitions
     correct_asset_file = {sym: close_types[sym] for sym in close_types if sym in position_tickers}
     for ticker in position_tickers:
         if ticker not in close_types:
-            liquidities[ticker] = find_liquidity(ticker, args)
+            # when a ticker is missing, we add it with the appropriate close strategy and get the liquidity
+            liquidities[ticker] = find_liquidity(ticker, current_status_list)
             correct_asset_file[ticker] = 'last_high_eod' if position_tickers[ticker] > 0 else 'low_close_moo'
     print(*[f"{t},{correct_asset_file[t]},{liquidities[t]}" for t in correct_asset_file], sep="\n")
 
-def find_liquidity(ticker, args):
-    current_status = csv.DictReader(open(args.current_status_file, "r"))
-    for row in current_status:
+def find_liquidity(ticker, current_status_list):
+    for row in current_status_list:
         if row['symbol'] == ticker and int(row['volume']) > 150000:
             return '1'
     return 'UNKNOWN'
