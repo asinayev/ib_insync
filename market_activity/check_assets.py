@@ -14,7 +14,7 @@ def check_asset_file(args):
     issues+=repeating_symbol_issues
     if issues:
         print(*issues, sep="\n")
-        print_correct_asset_file(close_types, position_tickers, args)
+        print_correct_asset_file(close_types, position_tickers, liquidities, args)
     ib.disconnect()
 
 def extract_close_types_and_liquidities(stock_dict):
@@ -39,10 +39,9 @@ def find_issues(close_types, position_tickers):
             issues.append(f"Held but absent from asset file: {ticker}")
     return issues
 
-def print_correct_asset_file(close_types, position_tickers, args):
+def print_correct_asset_file(close_types, position_tickers, liquidities, args):
     print("Correct asset file:\n")
     correct_asset_file = {sym: close_types[sym] for sym in close_types if sym in position_tickers}
-    liquidities = {}
     for ticker in position_tickers:
         if ticker not in close_types:
             liquidities[ticker] = find_liquidity(ticker, args)
