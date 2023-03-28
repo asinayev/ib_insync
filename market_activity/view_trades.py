@@ -1,17 +1,66 @@
-from ib_insync import *
+from ib_insync import IB, Trade
 from connection import initiate
 from datetime import date
-from glob import glob 
 from pandas import read_csv
+from typing import List, Dict, Tuple
 
 import argparse
 
+def get_trade_info(trade: Trade) -> List[str]:
+    today = date.today().strftime("%m/%d/%Y")
+    local_symbol = trade.contract.localSymbol
+    action = trade.order.action
+    price = str(trade.fills[0].execution.price)
+    shares = str(sum([fill.execution.shares for fill in trade.fills]))
+    status = str(trade.orderStatus.status)
+    num_fills = str(len(trade.fills))
+    time = str(trade.fills[0].execution.time)
+    return [today, local_symbol, action, price, '', shares, status, num_fills, time]
+
+
+def get_opens_and_closes(ib: IB) -> Tuple[List[List[str]], Dict[str, List[str]]]:
+    opens = []
+    closes = {}
+    for t in ib.trades():
+        if len(t.fills) > 0 and all([f.commissionReport.realizedPNL == 0 for f in t.fills]):
+            opens.append(get_trade_info(t))
+
+        if len(t.fills) > 0 and any([f.commissionReport.realizedPNL != 0 for f in t.fills]):
+            trade_info = get_trade_info(t)
+            closes[t.contract.localSymbol] = trade_info
+
+    return opens, closes
+
+def update_order_stocks(order_stocks, t):
+    for order, stocks in order_stocks.items():
+        if t[1] in stocks:
+            t[4] = order
+            order_stocks[order] = [s for s in stocks if s != t[1]]
+            break
+
+def get_formatted_trade(t, closes, order_stocks):
+    close_price = closes.get(t[1], [''])[3]
+    t[2], t[3] = str(t[3]), str(close_price) if t[2] == 'BUY' else (str(close_price), str(t[3]))
+    update_order_stocks(order_stocks, t)
+    t += ['more closed than opened'] if t[1] in closes and t[5] < closes[t[1]][5] else []
+    return ','.join(t)
+
+
+def print_trades(opens, closes, order_stocks):
+    for t in opens:
+        print(get_formatted_trade(t, closes, order_stocks))
+
+    print("#############################")
+    for sym in closes:
+        if sym not in (o[1] for o in opens):
+            print(sym, ',', closes[sym], ', NOT IN LIST OF PLANNED TRADES')
+
 # Instantiate the parser
-parser = argparse.ArgumentParser(description='Cancel all open orders')
+parser = argparse.ArgumentParser(description='Print trades in a very specific comma-separated format')
 
 
-parser.add_argument('--real', dest='real', action = 'store_true') 
-parser.add_argument('-c','--certain', action='append', help='Trades certainly executed', required=False)
+parser.add_argument('--real', dest='real', action = 'store_true', help='Use real account instead of paper trading') 
+parser.add_argument('-c','--certain', action='append', help='Trades in order of certaintiy of execution executed', required=False)
 parser.set_defaults(feature=False)
 args = parser.parse_args()
 
@@ -19,52 +68,9 @@ ib = initiate.initiate_ib(args, 14)
 order_csvs = {o:read_csv('/tmp/stonksanalysis/'+o+'.csv') for o in args.certain}
 order_stocks = {order:csv.symbol for order,csv in order_csvs.items()}
 
-opens = [[date.today().strftime("%m/%d/%Y"), 
-        t.contract.localSymbol, 
-        t.order.action,
-        str(t.fills[0].execution.price),
-        '',
-        str(sum([f.execution.shares for f in t.fills])),
-        str(t.orderStatus.status), 
-        str(len(t.fills)), 
-        str(t.fills[0].execution.time)] for t in ib.trades() 
-        if len(t.fills)>0 and all([f.commissionReport.realizedPNL==0 for f in t.fills])] 
-closes = {t.contract.localSymbol:
-        [date.today().strftime("%m/%d/%Y"), 
-        t.contract.localSymbol, 
-        t.order.action,
-        str(t.fills[0].execution.price),
-        '',
-        str(sum([f.execution.shares for f in t.fills])),
-        str(t.orderStatus.status), 
-        str(len(t.fills)), 
-        str(t.fills[0].execution.time)] for t in ib.trades() 
-        if len(t.fills)>0 and any([f.commissionReport.realizedPNL!=0 for f in t.fills])}
+opens, closes = get_opens_and_closes(ib)
+print_trades(opens, closes, order_stocks)
 
-for t in opens:
-    if t[1] in closes:
-        close_price = str(closes[t[1]][3])
-    else:
-        close_price = ""
-    if t[1] in closes and t[5]<closes[t[1]][5]:
-        t+=['more closed than opened']
-    if t[2]=='BUY':
-        t[2]=str(t[3])
-        t[3]=str(close_price)
-    else:
-        t[2]=close_price
-
-    for order,stocks in order_stocks.items():
-        if any(stocks==t[1]):
-            t[4]=order
-            order_stocks[order]=order_stocks[order][stocks!=t[1]]
-            break
-    print(','.join(t))
-
-print("#############################")
-for sym in closes:
-    if sym not in (o[1] for o in opens):
-        print(sym,',',closes[sym])
 ib.disconnect()
 
 
