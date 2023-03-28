@@ -4,7 +4,7 @@ import argparse
 import csv
 
 def check_asset_file(args):
-    ib = initiate.initiate_ib(args, client_id=133)
+    ib = initiate.initiate_ib(args, cid=133)
 
     stock_dict = csv.DictReader(open(args.file, "r"))
     close_types, liquidities, repeating_symbol_issues = extract_close_types_and_liquidities(stock_dict)
