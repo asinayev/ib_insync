@@ -53,7 +53,7 @@ def print_trades(opens, closes, order_stocks):
     print("#############################")
     for sym in closes:
         if sym not in (o[1] for o in opens):
-            print(sym, ',', closes[sym], ', NOT IN LIST OF PLANNED TRADES')
+            print(sym, ',', closes[sym], ', CLOSE TRADE')
 
 # Instantiate the parser
 parser = argparse.ArgumentParser(description='Print trades in a very specific comma-separated format')
