@@ -15,12 +15,16 @@ ib = initiate.initiate_ib(args, 14)
 ib.client.reqAllOpenOrders()
 dummy = ib.reqOpenOrders()
 
-x = ib.openOrders()
-print(len(x))
-for OtC in x: 
-    print(OtC)
-    if not args.justprint:
+if args.justprint:
+    x=ib.openTrades()
+    for OtC in x: 
+        print(OtC, "################################")
+else:
+    x = ib.openOrders()
+    print(len(x), "################################")
+    for OtC in x: 
         ib.cancelOrder(OtC)
+    print('canceled')
 ib.disconnect()
 
 
