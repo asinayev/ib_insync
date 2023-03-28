@@ -61,7 +61,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Check for issues with asset file')
     parser.add_argument('--file', type=str, required=True, help='Path to asset file')
     parser.add_argument('--real', dest='real', action='store_true', help='Use real account')
-    parser.add_argument('--current_status_file', type=str, required=True, help='Path to current status file')
+    parser.add_argument('--currentstatusfile', type=str, required=True, help='Path to current status file')
 
     args = parser.parse_args()
     check_asset_file(args)
