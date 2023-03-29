@@ -45,15 +45,9 @@ else:
     ib = initiate.initiate_ib(args, 14) 
     stockdict = csv.DictReader(open(args.file, "r"))
     for row in stockdict:
-        if row['time_in_force']=='close':
-            if row['order_type'] == 'MKT':
-                ibkr_ordertype = 'MOC'
-            elif row['order_type'] == 'LMT':
-                ibkr_ordertype = 'LOC'
-            else:
-                ibkr_ordertype = row['order_type']
-        else:
-            ibkr_ordertype = row['order_type']
+        ibkr_ordertype = row['order_type']
+        if row['time_in_force'] == 'close' and row['order_type'] in ['MKT', 'LMT']:
+            ibkr_ordertype = {'MKT': 'MOC', 'LMT': 'LOC'}[row['order_type']]
         row['contract']=Stock(row['symbol'], exchange='SMART', currency='USD')
         if ('strike_price' not in row or row['strike_price']=='') and 'close' not in row:
             print("Stock does not have strike price or close price: "+row['symbol'])
