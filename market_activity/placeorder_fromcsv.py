@@ -35,7 +35,7 @@ def order_if_needed(args):
     if SPY_issue:
         print(SPY_issue)
     else:
-        print("Executing "+args.file)
+        print(f"Executing {args.file}")
         ib = initiate.initiate_ib(args, 14)
         stockdict = csv.DictReader(open(args.file, "r"))
         for row in stockdict:
@@ -48,9 +48,10 @@ def check_spy(args):
     SPY_issue=None
     if args.minspymove or args.maxspymove:
         spy = next(csv.DictReader(open(args.spyfile, "r")))
-        if args.minspymove and float(spy['todaysChangePerc']) < float(args.minspymove):
+        todays_change_perc = float(spy['todaysChangePerc'])
+        if args.minspymove and todays_change_perc < float(args.minspymove):
             SPY_issue = 'SPY moved too low for \n'+args.file
-        if args.maxspymove and float(spy['todaysChangePerc']) > float(args.maxspymove):
+        if args.maxspymove and todays_change_perc > float(args.maxspymove):
             SPY_issue = 'SPY moved too high for \n'+args.file
     return SPY_issue
 
