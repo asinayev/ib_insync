@@ -31,17 +31,17 @@ def get_opens_and_closes(ib: IB) -> Tuple[List[List[str]], Dict[str, List[str]]]
 
     return opens, closes
 
-def update_order_stocks(order_stocks, t):
-    for order, stocks in order_stocks.items():
-        if t[1] in stocks:
-            t[4] = order
-            order_stocks[order] = [s for s in stocks if s != t[1]]
-            break
+def pop_off_trade(order_stocks, trade):
+    for order_type, stocks in order_stocks.items():
+        if trade[1] in stocks:
+            order_stocks[order_type] = [s for s in stocks if s != trade[1]]
+            return order_type
+    return ''
 
 def get_formatted_trade(t, closes, order_stocks):
     close_price = closes.get(t[1], ['','','',''])[3]
     t[2], t[3] = (str(t[3]), str(close_price)) if t[2] == 'BUY' else (str(close_price), str(t[3]))
-    update_order_stocks(order_stocks, t)
+    t[4] = pop_off_trade(order_stocks, t)
     t.append('more closed than opened' if t[1] in closes and t[5] < closes[t[1]][5] else '')
     return ','.join(t)
 
@@ -66,7 +66,7 @@ args = parser.parse_args()
 
 ib = initiate.initiate_ib(args, 14)
 order_csvs = {o:read_csv('/tmp/stonksanalysis/'+o+'.csv') for o in args.certain}
-order_stocks = {order:csv.symbol for order,csv in order_csvs.items()}
+order_stocks = {order:csv.symbol.tolist() for order,csv in order_csvs.items()}
 
 opens, closes = get_opens_and_closes(ib)
 print_trades(opens, closes, order_stocks)
