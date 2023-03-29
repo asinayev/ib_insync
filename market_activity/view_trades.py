@@ -39,10 +39,10 @@ def update_order_stocks(order_stocks, t):
             break
 
 def get_formatted_trade(t, closes, order_stocks):
-    close_price = closes.get(t[1], [''])[3]
-    t[2], t[3] = str(t[3]), str(close_price) if t[2] == 'BUY' else (str(close_price), str(t[3]))
+    close_price = closes.get(t[1], ['','','',''])[3]
+    t[2], t[3] = (str(t[3]), str(close_price)) if t[2] == 'BUY' else (str(close_price), str(t[3]))
     update_order_stocks(order_stocks, t)
-    t += ['more closed than opened'] if t[1] in closes and t[5] < closes[t[1]][5] else []
+    t.append('more closed than opened' if t[1] in closes and t[5] < closes[t[1]][5] else '')
     return ','.join(t)
 
 
