@@ -79,8 +79,9 @@ def place_order(row, ib)
                         lmtPrice=round(lmt_price,2))
     if test_adapt and row['strike_price']>args.minprice:
         test_order=functools.partial(part_order,
-                                     algoStrategy='Adaptive', 
                                      totalQuantity = 1, 
+                                     tif = 'DAY',
+                                     algoStrategy='Adaptive', 
                                      algoParams = [TagValue('adaptivePriority', 'Patient')],
                                     )
         test_trade = ib.placeOrder(row['contract'], test_order())
