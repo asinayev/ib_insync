@@ -23,7 +23,7 @@ parser.add_argument('--cash', type=int, required=True)
 parser.add_argument('--minprice', type=float, required=True)
 parser.add_argument('--minspymove', type=float, required=False)
 parser.add_argument('--maxspymove', type=float, required=False)
-
+parser.add_argument('--test_adapt', dest='test_adapt', action = 'store_true')
 parser.add_argument('--spyfile', type=str, required=False)
 #File needs columns:
 # symbol
@@ -69,12 +69,22 @@ def place_order(row, ib):
         row['strike_price']=float(row['strike_price'])
     row['quantity']=round(args.cash/row['strike_price'])
     ib.qualifyContracts(row['contract'])
+    lmt_price = float(row['strike_price'])
+    if row['order_type'] != 'LMT': lmt_price=lmt_price*1.1
     part_order = functools.partial(Order,
                         action = row['action'],
                         orderType = ibkr_ordertype, 
                         totalQuantity = row['quantity'], 
                         tif = row['time_in_force'], 
-                        lmtPrice=round(float(row['strike_price']),2))
+                        lmtPrice=round(lmt_price,2))
+    if test_adapt and row['strike_price']>args.minprice:
+        test_order=functools.partial(part_order,
+                                     totalQuantity = 1, 
+                                     tif = 'DAY',
+                                     algoStrategy='Adaptive', 
+                                     algoParams = [TagValue('adaptivePriority', 'Patient')],
+                                    )
+        test_trade = ib.placeOrder(row['contract'], test_order())
     #if not execution_flow.fee_too_high(order_preset=part_order, contract=row['contract'], 
     #        ib_conn=ib, fee_limit=max(2,args.cash/1000)):
     if row['strike_price']>args.minprice:
