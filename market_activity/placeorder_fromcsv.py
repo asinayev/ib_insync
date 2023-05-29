@@ -69,12 +69,14 @@ def place_order(row, ib)
         row['strike_price']=float(row['strike_price'])
     row['quantity']=round(args.cash/row['strike_price'])
     ib.qualifyContracts(row['contract'])
+    lmt_price = float(row['strike_price'])
+    if row['order_type'] != 'LMT': lmt_price=lmt_price*1.1
     part_order = functools.partial(Order,
                         action = row['action'],
                         orderType = ibkr_ordertype, 
                         totalQuantity = row['quantity'], 
                         tif = row['time_in_force'], 
-                        lmtPrice=round(float(row['strike_price']),2))
+                        lmtPrice=round(lmt_price,2))
     #if not execution_flow.fee_too_high(order_preset=part_order, contract=row['contract'], 
     #        ib_conn=ib, fee_limit=max(2,args.cash/1000)):
     if row['strike_price']>args.minprice:
