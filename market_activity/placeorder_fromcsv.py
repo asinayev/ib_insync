@@ -55,14 +55,14 @@ def check_spy(args):
             SPY_issue = 'SPY moved too high for \n'+args.file
     return SPY_issue
 
-def place_order(row, ib)
+def place_order(row, ib):
     ibkr_ordertype = row['order_type']
     if row['time_in_force'] == 'close' and row['order_type'] in ['MKT', 'LMT']:
         ibkr_ordertype = {'MKT': 'MOC', 'LMT': 'LOC'}[row['order_type']]
     row['contract']=Stock(row['symbol'], exchange='SMART', currency='USD')
     if ('strike_price' not in row or row['strike_price']=='') and 'close' not in row:
         print("Stock has no strike price or close price. Skipping: "+row['symbol'])
-        continue
+        return
     if 'strike_price' not in row or row['strike_price']=='' :
         row['strike_price']=float(row['close'])
     else:
@@ -78,9 +78,9 @@ def place_order(row, ib)
     #if not execution_flow.fee_too_high(order_preset=part_order, contract=row['contract'], 
     #        ib_conn=ib, fee_limit=max(2,args.cash/1000)):
     if row['strike_price']>args.minprice:
-        print(f"Sending {ibkr_ordertype} order at {row['strike price']}: {row['symbol']}")
+        print(f"Sending {ibkr_ordertype} order at {row['strike_price']}: {row['symbol']}")
         this_trade = ib.placeOrder(row['contract'], part_order())
     else:
-        print(f"Skipping because price {row['strike price']} is too low: {row['symbol']}")
+        print(f"Skipping because price {row['strike_price']} is too low: {row['symbol']}")
 
 order_if_needed(args)
