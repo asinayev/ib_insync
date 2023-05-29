@@ -23,7 +23,7 @@ parser.add_argument('--cash', type=int, required=True)
 parser.add_argument('--minprice', type=float, required=True)
 parser.add_argument('--minspymove', type=float, required=False)
 parser.add_argument('--maxspymove', type=float, required=False)
-
+parser.add_argument('--test_adapt', dest='test_adapt', action = 'store_true')
 parser.add_argument('--spyfile', type=str, required=False)
 #File needs columns:
 # symbol
@@ -77,6 +77,13 @@ def place_order(row, ib)
                         totalQuantity = row['quantity'], 
                         tif = row['time_in_force'], 
                         lmtPrice=round(lmt_price,2))
+    if test_adapt and row['strike_price']>args.minprice:
+        test_order=functools.partial(part_order,
+                                     algoStrategy='Adaptive', 
+                                     totalQuantity = 1, 
+                                     algoParams = [TagValue('adaptivePriority', 'Patient')],
+                                    )
+        test_trade = ib.placeOrder(row['contract'], test_order())
     #if not execution_flow.fee_too_high(order_preset=part_order, contract=row['contract'], 
     #        ib_conn=ib, fee_limit=max(2,args.cash/1000)):
     if row['strike_price']>args.minprice:
