@@ -39,7 +39,7 @@ def order_if_needed(args):
         ib = initiate.initiate_ib(args, 14)
         stockdict = csv.DictReader(open(args.file, "r"))
         for row in stockdict:
-            place_order(row, ib)
+            place_order(row, ib, test_adapt=args.test_adapt)
         while ib.isConnected():
             ib.disconnect()
             ib.waitOnUpdate(timeout=.3)
@@ -55,7 +55,7 @@ def check_spy(args):
             SPY_issue = 'SPY moved too high for \n'+args.file
     return SPY_issue
 
-def place_order(row, ib):
+def place_order(row, ib, test_adapt=False):
     ibkr_ordertype = row['order_type']
     if row['time_in_force'] == 'close' and row['order_type'] in ['MKT', 'LMT']:
         ibkr_ordertype = {'MKT': 'MOC', 'LMT': 'LOC'}[row['order_type']]
