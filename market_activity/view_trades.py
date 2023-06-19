@@ -46,14 +46,18 @@ def get_formatted_trade(t, closes, order_stocks):
     return ','.join(t)
 
 
-def print_trades(opens, closes, order_stocks):
+def print_trades(opens, closes, order_stocks, out_file_name=False):
+    if out_file_name:
+        out_file=open(out_file_name, 'w')
     for t in opens:
-        print(get_formatted_trade(t, closes, order_stocks))
+        print(get_formatted_trade(t, closes, order_stocks), file=out_file)
 
-    print("#############################")
+    print("#############################", file=out_file)
     for sym in closes:
         if sym not in (o[1] for o in opens):
-            print(sym, ',', closes[sym], ', CLOSE TRADE')
+            print(sym, ',', closes[sym], ', CLOSE TRADE', file=out_file)
+    if out_file:
+        out_file.close()
 
 # Instantiate the parser
 parser = argparse.ArgumentParser(description='Print trades in a very specific comma-separated format')
@@ -61,6 +65,7 @@ parser = argparse.ArgumentParser(description='Print trades in a very specific co
 
 parser.add_argument('--real', dest='real', action = 'store_true', help='Use real account instead of paper trading') 
 parser.add_argument('-c','--certain', action='append', help='Trades in order of certaintiy of execution executed', required=False)
+parser.add_argument('--out_file', type=str, required=False) 
 parser.set_defaults(feature=False)
 args = parser.parse_args()
 
@@ -69,7 +74,7 @@ order_csvs = {o:read_csv('/tmp/stonksanalysis/'+o+'.csv') for o in args.certain}
 order_stocks = {order:csv.symbol.tolist() for order,csv in order_csvs.items()}
 
 opens, closes = get_opens_and_closes(ib)
-print_trades(opens, closes, order_stocks)
+print_trades(opens, closes, order_stocks, args.out_file)
 
 ib.disconnect()
 

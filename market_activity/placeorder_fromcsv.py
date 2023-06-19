@@ -77,13 +77,15 @@ def place_order(row, ib, test_adapt=False):
                         totalQuantity = row['quantity'], 
                         tif = row['time_in_force'], 
                         lmtPrice=round(lmt_price,2))
-    if test_adapt and row['strike_price']>args.minprice:
+    if test_adapt and row['strike_price']>args.minprice and row['quantity']:
         test_order=functools.partial(part_order,
                                      totalQuantity = 1, 
                                      tif = 'DAY',
                                      algoStrategy='Adaptive', 
                                      algoParams = [TagValue('adaptivePriority', 'Patient')],
                                     )
+        part_order = functools.partial(part_order,
+                        totalQuantity = row['quantity']-1)
         test_trade = ib.placeOrder(row['contract'], test_order())
     #if not execution_flow.fee_too_high(order_preset=part_order, contract=row['contract'], 
     #        ib_conn=ib, fee_limit=max(2,args.cash/1000)):
