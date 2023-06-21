@@ -46,9 +46,9 @@ def get_formatted_trade(t, closes, order_stocks):
     return ','.join(t)
 
 
-def print_trades(opens, closes, order_stocks, out_file_name=False):
-    if out_file_name:
-        out_file=open(out_file_name, 'w')
+def print_trades(opens, closes, order_stocks, out_file=False):
+    if out_file:
+        out_file=open(out_file, 'w')
     for t in opens:
         print(get_formatted_trade(t, closes, order_stocks), file=out_file)
 
