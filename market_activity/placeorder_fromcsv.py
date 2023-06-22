@@ -2,6 +2,7 @@ from ib_insync import *
 from connection import initiate
 from datetime import datetime, timedelta
 
+import transaction_logging
 import execution_flow
 import functools 
 import argparse
@@ -87,11 +88,13 @@ def place_order(row, ib, test_adapt=False):
         part_order = functools.partial(part_order,
                         totalQuantity = row['quantity']-1)
         test_trade = ib.placeOrder(row['contract'], test_order())
+        transaction_logging.log_trade(this_trade,args.file,'/tmp/stonksanalysis/order_logs.json',{'adapt_exp':True})
     #if not execution_flow.fee_too_high(order_preset=part_order, contract=row['contract'], 
     #        ib_conn=ib, fee_limit=max(2,args.cash/1000)):
     if row['strike_price']>args.minprice:
         print(f"Sending {ibkr_ordertype} order at {row['strike_price']}: {row['symbol']}")
         this_trade = ib.placeOrder(row['contract'], part_order())
+        transaction_logging.log_trade(this_trade,args.file,'/tmp/stonksanalysis/order_logs.json')
     else:
         print(f"Skipping because price {row['strike_price']} is too low: {row['symbol']}")
 

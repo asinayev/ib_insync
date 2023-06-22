@@ -1,6 +1,7 @@
 from ib_insync import *
 from connection import initiate
 from datetime import datetime, timedelta
+import transaction_logging
 import functools
 import argparse
 import csv
@@ -128,6 +129,7 @@ for sym in stock_tickers:
             else:
               continue
         tr = ib.placeOrder(contr, order)
+        transaction_logging.log_trade(tr,args.file,'/tmp/stonksanalysis/order_logs.json',{'close':True})
         print(tr)
         time.sleep(3)
         print("ordering close for "+sym)

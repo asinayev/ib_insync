@@ -4,6 +4,7 @@ from datetime import date
 from pandas import read_csv
 from typing import List, Dict, Tuple
 
+import transaction_logging
 import argparse
 
 def get_trade_info(trade: Trade) -> List[str]:
@@ -22,6 +23,7 @@ def get_opens_and_closes(ib: IB) -> Tuple[List[List[str]], Dict[str, List[str]]]
     opens = []
     closes = {}
     for t in ib.trades():
+        transaction_logging.log_trade(t,'','/tmp/stonksanalysis/trade_logs.json')
         if len(t.fills) > 0 and all([f.commissionReport.realizedPNL == 0 for f in t.fills]):
             opens.append(get_trade_info(t))
 
