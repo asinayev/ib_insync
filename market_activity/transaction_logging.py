@@ -4,7 +4,7 @@ def log_trade(trade,trade_reason,log_dir,notes={}):
     traded=len(trade.fills)>0
     to_log={'symbol':trade.contract.localSymbol,
             'date':datetime.datetime.now().date().__str__(),
-            'order_id':trade.order.permId,
+            'order_id':trade.order.orderId,
             'action':trade.order.action,
             'quantity':sum([fill.execution.shares for fill in trade.fills]) if traded else trade.order.totalQuantity,
             'order_type':trade.order.orderType,
@@ -17,7 +17,7 @@ def log_trade(trade,trade_reason,log_dir,notes={}):
             'realizedPNL':sum([fill.commissionReport.realizedPNL for fill in trade.fills]),
             'trade_reason':trade_reason,
             'record_ts':datetime.datetime.now().timestamp(),
-            'first_fill_ts':min([fill.time for fill in trade.fills]).timestamp() if traded else 0
+            'first_fill_ts':min([fill.time for fill in trade.fills]).timestamp() if traded else 0,
             }
     to_log.update(notes)
     with open(log_dir, 'a') as log_file:

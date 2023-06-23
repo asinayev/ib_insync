@@ -88,7 +88,7 @@ def place_order(row, ib, test_adapt=False):
         part_order = functools.partial(part_order,
                         totalQuantity = row['quantity']-1)
         test_trade = ib.placeOrder(row['contract'], test_order())
-        transaction_logging.log_trade(this_trade,args.file,'/tmp/stonksanalysis/order_logs.json',{'adapt_exp':True})
+        transaction_logging.log_trade(test_trade,args.file,'/tmp/stonksanalysis/order_logs.json',{'adapt_exp':1})
     #if not execution_flow.fee_too_high(order_preset=part_order, contract=row['contract'], 
     #        ib_conn=ib, fee_limit=max(2,args.cash/1000)):
     if row['strike_price']>args.minprice:
