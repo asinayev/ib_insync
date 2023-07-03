@@ -19,12 +19,11 @@ parser.add_argument('--file', type=str, required=True)
 # order_type
 # time_in_force
 
-parser.add_argument('--real', dest='real', action = 'store_true') 
+parser.add_argument('--real', dest='real', action='store_true') 
 parser.add_argument('--cash', type=int, required=True)
 parser.add_argument('--minprice', type=float, required=True)
 parser.add_argument('--minspymove', type=float, required=False)
 parser.add_argument('--maxspymove', type=float, required=False)
-parser.add_argument('--test_adapt', dest='test_adapt', action = 'store_true')
 parser.add_argument('--spyfile', type=str, required=False)
 #File needs columns:
 # symbol
@@ -40,7 +39,7 @@ def order_if_needed(args):
         ib = initiate.initiate_ib(args, 14)
         stockdict = csv.DictReader(open(args.file, "r"))
         for row in stockdict:
-            place_order(row, ib, test_adapt=args.test_adapt)
+            place_order(row, ib)
         while ib.isConnected():
             ib.disconnect()
             ib.waitOnUpdate(timeout=.3)
@@ -56,7 +55,7 @@ def check_spy(args):
             SPY_issue = 'SPY moved too high for \n'+args.file
     return SPY_issue
 
-def place_order(row, ib, test_adapt=False):
+def place_order(row, ib):
     ibkr_ordertype = row['order_type']
     if row['time_in_force'] == 'close' and row['order_type'] in ['MKT', 'LMT']:
         ibkr_ordertype = {'MKT': 'MOC', 'LMT': 'LOC'}[row['order_type']]
@@ -78,19 +77,6 @@ def place_order(row, ib, test_adapt=False):
                         totalQuantity = row['quantity'], 
                         tif = row['time_in_force'], 
                         lmtPrice=round(lmt_price,2))
-    if test_adapt and row['strike_price']>args.minprice and row['quantity']:
-        test_order=functools.partial(part_order,
-                                     totalQuantity = 1, 
-                                     tif = 'DAY',
-                                     algoStrategy='Adaptive', 
-                                     algoParams = [TagValue('adaptivePriority', 'Patient')],
-                                    )
-        part_order = functools.partial(part_order,
-                        totalQuantity = row['quantity']-1)
-        test_trade = ib.placeOrder(row['contract'], test_order())
-        transaction_logging.log_trade(test_trade,args.file,'/tmp/stonksanalysis/order_logs.json',{'adapt_exp':1})
-    #if not execution_flow.fee_too_high(order_preset=part_order, contract=row['contract'], 
-    #        ib_conn=ib, fee_limit=max(2,args.cash/1000)):
     if row['strike_price']>args.minprice:
         print(f"Sending {ibkr_ordertype} order at {row['strike_price']}: {row['symbol']}")
         this_trade = ib.placeOrder(row['contract'], part_order())
