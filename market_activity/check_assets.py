@@ -15,7 +15,7 @@ def check_asset_file(args):
     if issues:
         print(*issues, sep="\n")
         current_status_list = list(csv.DictReader(open(args.current_status_file, "r")))
-        print_correct_asset_file(close_types, position_tickers, liquidities, current_status_list)
+        print_correct_asset_file(close_types, position_tickers, liquidities, current_status_list, args.out_file)
     ib.disconnect()
 
 def extract_close_types_and_liquidities(stock_dict):
@@ -40,7 +40,7 @@ def find_issues(close_types, position_tickers):
             issues.append(f"Held but absent from asset file: {ticker}")
     return issues
 
-def print_correct_asset_file(close_types, position_tickers, liquidities, current_status_list):
+def print_correct_asset_file(close_types, position_tickers, liquidities, current_status_list, out_file):
     print("Correct asset file:\n")
     # starts as the intersection of stocks in current assets file and existing positions
     correct_asset_file = {sym: close_types[sym] for sym in close_types if sym in position_tickers}
@@ -49,8 +49,15 @@ def print_correct_asset_file(close_types, position_tickers, liquidities, current
             # when current position is missing, we add it with the appropriate close strategy and get the liquidity
             correct_asset_file[ticker] = 'last_high_eod' if position_tickers[ticker] > 0 else 'low_close_moo'
             liquidities[ticker] = find_liquidity(ticker, current_status_list)
+            if liquidities[ticker]='UNKNOWN' and out_file:
+                liquidities[ticker]='0'
     # Now we have liquidities for all the tickers in the existing files and the missing ones
-    print(*[f"{t},{correct_asset_file[t]},{liquidities[t]}" for t in correct_asset_file], sep="\n")
+    if out_file:
+        out_file=open(out_file, 'w')
+        print('symbol,close_type,liquid\n', file=out_file)
+    print(*[f"{t},{correct_asset_file[t]},{liquidities[t]}" for t in correct_asset_file], sep="\n", file=out_file)
+    if out_file:
+        out_file.close()
 
 def find_liquidity(ticker, current_status_list):
     for row in current_status_list:
@@ -64,6 +71,7 @@ if __name__ == '__main__':
     parser.add_argument('--file', type=str, required=True, help='Path to asset file')
     parser.add_argument('--real', dest='real', action='store_true', help='Use real account')
     parser.add_argument('--current_status_file', type=str, required=True, help='Path to current status file')
+    parser.add_argument('--out_file', type=str, required=False) 
 
     args = parser.parse_args()
     check_asset_file(args)
