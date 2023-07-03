@@ -19,11 +19,12 @@ def get_trade_info(trade: Trade) -> List[str]:
     return [today, local_symbol, action, price, '', shares, status, num_fills, time]
 
 
-def get_opens_and_closes(ib: IB) -> Tuple[List[List[str]], Dict[str, List[str]]]:
+def get_opens_and_closes(ib: IB, args) -> Tuple[List[List[str]], Dict[str, List[str]]]:
     opens = []
     closes = {}
     for t in ib.trades():
-        transaction_logging.log_trade(t,'','/tmp/stonksanalysis/trade_logs.json')
+        if args.file_type=='json':
+            transaction_logging.log_trade(t,'',args.out_file)
         if len(t.fills) > 0 and all([f.commissionReport.realizedPNL == 0 for f in t.fills]):
             opens.append(get_trade_info(t))
 
@@ -68,16 +69,18 @@ parser = argparse.ArgumentParser(description='Print trades in a very specific co
 parser.add_argument('--real', dest='real', action = 'store_true', help='Use real account instead of paper trading') 
 parser.add_argument('-c','--certain', action='append', help='Trades in order of certaintiy of execution executed', required=False)
 parser.add_argument('--out_file', type=str, required=False) 
+parser.add_argument('--file_type', type=str, required=False) 
 parser.set_defaults(feature=False)
 args = parser.parse_args()
 
 ib = initiate.initiate_ib(args, 14)
-order_csvs = {o:read_csv('/tmp/stonksanalysis/'+o+'.csv') for o in args.certain}
-order_stocks = {order:csv.symbol.tolist() for order,csv in order_csvs.items()}
-
-opens, closes = get_opens_and_closes(ib)
-print_trades(opens, closes, order_stocks, args.out_file)
-
-ib.disconnect()
+opens, closes = get_opens_and_closes(ib,args)
+if args.file_type=='json':
+    ib.disconnect()
+else:
+    order_csvs = {o:read_csv('/tmp/stonksanalysis/'+o+'.csv') for o in args.certain}
+    order_stocks = {order:csv.symbol.tolist() for order,csv in order_csvs.items()}
+    print_trades(opens, closes, order_stocks, args.out_file)
+    ib.disconnect()
 
 
