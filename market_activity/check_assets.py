@@ -14,8 +14,8 @@ def check_asset_file(args):
     issues+=repeating_symbol_issues
     if issues:
         print(*issues, sep="\n")
-        current_status_list = list(csv.DictReader(open(args.current_status_file, "r")))
-        print_correct_asset_file(close_types, position_tickers, liquidities, current_status_list, args.out_file)
+    current_status_list = list(csv.DictReader(open(args.current_status_file, "r")))
+    print_correct_asset_file(close_types, position_tickers, liquidities, current_status_list, args.out_file)
     ib.disconnect()
 
 def extract_close_types_and_liquidities(stock_dict):
@@ -49,7 +49,7 @@ def print_correct_asset_file(close_types, position_tickers, liquidities, current
             # when current position is missing, we add it with the appropriate close strategy and get the liquidity
             correct_asset_file[ticker] = 'last_high_eod' if position_tickers[ticker] > 0 else 'low_close_moo'
             liquidities[ticker] = find_liquidity(ticker, current_status_list)
-            if liquidities[ticker]='UNKNOWN' and out_file:
+            if liquidities[ticker]=='UNKNOWN' and out_file:
                 liquidities[ticker]='0'
     # Now we have liquidities for all the tickers in the existing files and the missing ones
     if out_file:
