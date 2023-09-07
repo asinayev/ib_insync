@@ -56,9 +56,9 @@ def check_spy(args):
     return SPY_issue
 
 def get_quantity(row,existing_position, to_spend, price):
-    if row['action']='BUY' and existing_position>0: 
+    if row['action']=='BUY' and existing_position>0: 
         return round(to_spend/price)
-    elif row['action']='SELL' and existing_position<0: 
+    elif row['action']=='SELL' and existing_position<0: 
         return round(to_spend/price)
     else:
         return abs(existing_position)
@@ -97,7 +97,7 @@ def place_order(row, ib):
         print(f"Sending {ibkr_ordertype} order at {row['strike_price']}: {row['symbol']}")
         this_trade = ib.placeOrder(row['contract'], part_order())
         notes={}
-        if position>0: notes['close']=1
+        if current_position>0: notes['close']=1
         transaction_logging.log_trade(this_trade,args.file,'/tmp/stonksanalysis/order_logs.json',notes)
     else:
         print(f"Skipping because price {row['strike_price']} is too low: {row['symbol']}")
