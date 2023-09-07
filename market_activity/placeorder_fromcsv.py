@@ -55,6 +55,21 @@ def check_spy(args):
             SPY_issue = 'SPY moved too high for \n'+args.file
     return SPY_issue
 
+def get_quantity(row,existing_position, to_spend, price):
+    if row['action']='BUY' and existing_position>0: 
+        return round(to_spend/price)
+    elif row['action']='SELL' and existing_position<0: 
+        return round(to_spend/price)
+    else:
+        return abs(existing_position)
+
+def get_position(ib,sym):
+    openPositions = ib.positions()
+    position_tickers = {p.contract.symbol:i for i,p in enumerate(openPositions)}
+    if sym in position_tickers:
+        return openPositions[position_tickers[sym]].position
+    else: return 0
+
 def place_order(row, ib):
     ibkr_ordertype = row['order_type']
     if row['time_in_force'] == 'close' and row['order_type'] in ['MKT', 'LMT']:
@@ -67,7 +82,8 @@ def place_order(row, ib):
         row['strike_price']=float(row['close'])
     else:
         row['strike_price']=float(row['strike_price'])
-    row['quantity']=round(args.cash/row['strike_price'])
+    current_position=get_position(ib,row['symbol'])
+    row['quantity']=get_quantity(row,current_position,args.cash,row['strike_price'])
     ib.qualifyContracts(row['contract'])
     lmt_price = float(row['strike_price'])
     if row['order_type'] != 'LMT': lmt_price=lmt_price*1.1
@@ -80,7 +96,9 @@ def place_order(row, ib):
     if row['strike_price']>args.minprice:
         print(f"Sending {ibkr_ordertype} order at {row['strike_price']}: {row['symbol']}")
         this_trade = ib.placeOrder(row['contract'], part_order())
-        transaction_logging.log_trade(this_trade,args.file,'/tmp/stonksanalysis/order_logs.json')
+        notes={}
+        if position>0: notes['close']=1
+        transaction_logging.log_trade(this_trade,args.file,'/tmp/stonksanalysis/order_logs.json',notes)
     else:
         print(f"Skipping because price {row['strike_price']} is too low: {row['symbol']}")
 
