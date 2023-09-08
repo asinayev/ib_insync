@@ -68,8 +68,18 @@ def get_quantity(row,existing_position, to_spend, price):
 def get_position(ib,sym):
     openPositions = ib.positions()
     position_tickers = {p.contract.symbol:i for i,p in enumerate(openPositions)}
+    ib.client.reqAllOpenOrders()
+    _ = ib.reqOpenOrders()
+    openTrades = ib.openTrades()
     if sym in position_tickers:
-        return openPositions[position_tickers[sym]].position
+        final_position=openPositions[position_tickers[sym]].position
+        for t in openTrades:
+            if sym==t.contract.symbol:
+                if t.order.action=='BUY':
+                    final_position+=t.order.totalQuantity
+                elif t.order.action=='SELL':
+                    final_position-=t.order.totalQuantity
+        return final_position
     else: return 0
 
 def place_order(row, ib):
@@ -99,7 +109,7 @@ def place_order(row, ib):
         print(f"Sending {ibkr_ordertype} order at {row['strike_price']}: {row['symbol']}")
         this_trade = ib.placeOrder(row['contract'], part_order())
         notes={}
-        if current_position>0: notes['close']=1
+        if abs(current_position)>0: notes['close']=1
         transaction_logging.log_trade(this_trade,args.file,'/tmp/stonksanalysis/order_logs.json',notes)
     else:
         print(f"Skipping because price {row['strike_price']} is too low: {row['symbol']}")
