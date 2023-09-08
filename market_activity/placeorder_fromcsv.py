@@ -60,6 +60,8 @@ def get_quantity(row,existing_position, to_spend, price):
         return round(to_spend/price)
     elif row['action']=='SELL' and existing_position<0: 
         return round(to_spend/price)
+    elif round(existing_position)==0:
+        return round(to_spend/price)
     else:
         return abs(existing_position)
 
