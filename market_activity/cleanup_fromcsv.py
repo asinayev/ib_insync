@@ -43,7 +43,7 @@ position_tickers = {p.contract.symbol:i for i,p in enumerate(openPositions)}
 open_tickers = [t.contract.symbol for t in ib.openTrades()]
 
 def order_conditions(args, position, lmt_price=None, contr=None):
-    time_condition = TimeCondition(isMore=True, time=datetime.today().strftime('%Y%m%d')+' 15:50:00 EST', conjunction='a')
+    time_condition = TimeCondition(isMore=True, time=datetime.today().strftime('%Y%m%d')+' 15:50:00 US/Eastern', conjunction='a')
     if args.illiquid and args.closetype=='last_high_eod' and position>0:
         return Order(action="SELL",
                      orderType="LMT",
