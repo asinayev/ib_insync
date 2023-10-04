@@ -57,13 +57,13 @@ def check_spy(args):
 
 def get_quantity(row,existing_position, to_spend, price):
     if row['action']=='BUY' and existing_position>0: 
-        return round(to_spend/price)
+        return round(to_spend/price), {}
     elif row['action']=='SELL' and existing_position<0: 
-        return round(to_spend/price)
+        return round(to_spend/price), {}
     elif round(existing_position)==0:
-        return round(to_spend/price)
+        return round(to_spend/price), {}
     else:
-        return abs(existing_position)
+        return abs(existing_position), {'close':1}
 
 def get_position(ib,sym):
     openPositions = ib.positions()
@@ -95,7 +95,7 @@ def place_order(row, ib):
     else:
         row['strike_price']=float(row['strike_price'])
     current_position=get_position(ib,row['symbol'])
-    row['quantity']=get_quantity(row,current_position,args.cash,row['strike_price'])
+    row['quantity'], notes=get_quantity(row,current_position,args.cash,row['strike_price'])
     ib.qualifyContracts(row['contract'])
     lmt_price = float(row['strike_price'])
     if row['order_type'] != 'LMT': lmt_price=lmt_price*1.1
@@ -108,8 +108,6 @@ def place_order(row, ib):
     if row['strike_price']>args.minprice:
         print(f"Sending {ibkr_ordertype} order at {row['strike_price']}: {row['symbol']}")
         this_trade = ib.placeOrder(row['contract'], part_order())
-        notes={}
-        if abs(current_position)>0: notes['close']=1
         transaction_logging.log_trade(this_trade,args.file,'/tmp/stonksanalysis/order_logs.json',notes)
     else:
         print(f"Skipping because price {row['strike_price']} is too low: {row['symbol']}")
