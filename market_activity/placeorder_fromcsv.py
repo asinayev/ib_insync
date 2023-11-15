@@ -99,12 +99,18 @@ def place_order(row, ib):
     ibkr_ordertype = row['order_type']
     if row['time_in_force'] == 'close' and row['order_type'] in ['MKT', 'LMT']:
         ibkr_ordertype = {'MKT': 'MOC', 'LMT': 'LOC'}[row['order_type']]
-    row['contract']=Stock(row['symbol'], exchange='SMART', currency='USD')
-    ib.qualifyContracts(row['contract'])
+    qualifieds=ib.qualifyContracts(Stock(row['symbol'], exchange='SMART', currency='USD'))
+    if len(qualifieds)==0:
+        print("Symbol not found. Skipping: "+row['symbol'])
+        return
+    if len(qualifieds)>1:
+        print("More than one contract for symbol not found. Skipping: "+row['symbol'])
+        return
     if row['order_type']=='LMT':
         if 'strike_price' not in row or row['strike_price']=='':
             print("Stock has no strike price or close price. Skipping: "+row['symbol'])
             return
+    row['contract']=qualifieds[0]
     row['strike_price'], lmt_price = get_price(ib,row['contract'],row['order_type']=='LMT',row['strike_price'],row['action'])
     current_position=get_position(ib,row['symbol'])
     row['quantity'], notes=get_quantity(row,current_position,args.cash,row['strike_price'])
