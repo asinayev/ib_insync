@@ -78,10 +78,10 @@ def get_price(ib,contract,is_limit,strike_price,action):
         ib.sleep(.1)
         i+=1
         if i>30:
+            print("Market price not found. Using strike price for: "+row['symbol'])
+            mkt_price=float(strike_price)
             break
-    if i>30:
-        mkt_price=float(strike_price)
-    else:
+    if i<=30:
         mkt_price=last_live.last
     if is_limit:
         return mkt_price, float(strike_price)
@@ -122,9 +122,8 @@ def place_order(row, ib):
             return
     row['contract']=qualifieds[0]
     row['strike_price'], lmt_price = get_price(ib,row['contract'],row['order_type']=='LMT',row['strike_price'],row['action'])
-    lmt_price=row['strike_price']
     if not lmt_price: 
-        print(f"Skipping because no price price found for {row['symbol']}")
+        print(f"Skipping because no price found for {row['symbol']}")
         return
     current_position=get_position(ib,row['symbol'])
     row['quantity'], notes=get_quantity(row,current_position,args.cash,row['strike_price'])
