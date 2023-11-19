@@ -57,8 +57,7 @@ def print_trades(opens, closes, order_stocks, out_file=False):
 
     print("#############################", file=out_file)
     for sym in closes:
-        if sym not in (o[1] for o in opens):
-            print(sym, ',', closes[sym], ', CLOSE TRADE', file=out_file)
+        print(sym, ',', closes[sym], ', CLOSE TRADE', file=out_file)
     if out_file:
         out_file.close()
 
