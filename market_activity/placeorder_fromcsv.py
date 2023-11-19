@@ -3,7 +3,6 @@ from connection import initiate
 from datetime import datetime, timedelta
 
 import transaction_logging
-import execution_flow
 import functools 
 import argparse
 import math
@@ -56,6 +55,12 @@ def check_spy(args):
             SPY_issue = 'SPY moved too high for \n'+args.file
     return SPY_issue
 
+def get_ibkr_order_type(row):
+    if row['time_in_force'] == 'close' and row['order_type'] in ['MKT', 'LMT']:
+        return {'MKT': 'MOC', 'LMT': 'LOC'}[row['order_type']]
+    else:
+        return row['order_type']
+
 def get_quantity(row,existing_position, to_spend, price):
     if row['action']=='BUY' and existing_position>0: 
         return round(to_spend/price), {}
@@ -66,7 +71,7 @@ def get_quantity(row,existing_position, to_spend, price):
     else:
         return abs(existing_position), {'close':1}
 
-def get_price(ib,contract,is_limit, strike_price,action):
+def get_price(ib,contract,is_limit,strike_price,action):
     last_live=ib.reqMktData(contract, genericTickList='', snapshot=True, regulatorySnapshot=False,mktDataOptions=None)
     i=0
     while math.isnan(last_live.last):
@@ -103,15 +108,13 @@ def get_position(ib,sym):
     else: return 0
 
 def place_order(row, ib):
-    ibkr_ordertype = row['order_type']
-    if row['time_in_force'] == 'close' and row['order_type'] in ['MKT', 'LMT']:
-        ibkr_ordertype = {'MKT': 'MOC', 'LMT': 'LOC'}[row['order_type']]
+    ibkr_ordertype = get_ibkr_order_type(row)
     qualifieds=ib.qualifyContracts(Stock(row['symbol'], exchange='SMART', currency='USD'))
     if len(qualifieds)==0:
         print("Symbol not found. Skipping: "+row['symbol'])
         return
     if len(qualifieds)>1:
-        print("More than one contract for symbol not found. Skipping: "+row['symbol'])
+        print("More than one contract for symbol found. Skipping: "+row['symbol'])
         return
     if row['order_type']=='LMT':
         if 'strike_price' not in row or row['strike_price']=='':
