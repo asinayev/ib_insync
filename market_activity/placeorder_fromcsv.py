@@ -68,9 +68,16 @@ def get_quantity(row,existing_position, to_spend, price):
 
 def get_price(ib,contract,is_limit, strike_price,action):
     last_live=ib.reqMktData(contract, genericTickList='', snapshot=True, regulatorySnapshot=False,mktDataOptions=None)
+    i=0
     while math.isnan(last_live.last):
         ib.sleep(.1)
-    mkt_price=last_live.last
+        i+=1
+        if i>30:
+            break
+    if i>30:
+        mkt_price=float(strike_price)
+    else:
+        mkt_price=last_live.last
     if is_limit:
         return mkt_price, float(strike_price)
     elif action=='BUY':
@@ -112,6 +119,10 @@ def place_order(row, ib):
             return
     row['contract']=qualifieds[0]
     row['strike_price'], lmt_price = get_price(ib,row['contract'],row['order_type']=='LMT',row['strike_price'],row['action'])
+    lmt_price=row['strike_price']
+    if not lmt_price: 
+        print(f"Skipping because no price price found for {row['symbol']}")
+        return
     current_position=get_position(ib,row['symbol'])
     row['quantity'], notes=get_quantity(row,current_position,args.cash,row['strike_price'])
     part_order = functools.partial(Order,
