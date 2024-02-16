@@ -18,20 +18,19 @@ def get_trade_info(trade: Trade) -> List[str]:
     time = str(trade.fills[0].execution.time)
     return [today, local_symbol, action, price, '', shares, status, num_fills, time]
 
+def log_json(ib: IB, args):
+    for t in ib.trades():
+        transaction_logging.log_trade(t,'',args.out_file)
 
 def get_opens_and_closes(ib: IB, args) -> Tuple[List[List[str]], Dict[str, List[str]]]:
     opens = []
     closes = {}
     for t in ib.trades():
-        if args.file_type=='json':
-            transaction_logging.log_trade(t,'',args.out_file)
         if len(t.fills) > 0 and all([f.commissionReport.realizedPNL == 0 for f in t.fills]):
             opens.append(get_trade_info(t))
-
         if len(t.fills) > 0 and any([f.commissionReport.realizedPNL != 0 for f in t.fills]):
             trade_info = get_trade_info(t)
             closes[t.contract.localSymbol] = trade_info
-
     return opens, closes
 
 def pop_off_trade(order_stocks, trade):
@@ -73,10 +72,11 @@ parser.set_defaults(feature=False)
 args = parser.parse_args()
 
 ib = initiate.initiate_ib(args, 14)
-opens, closes = get_opens_and_closes(ib,args)
 if args.file_type=='json':
+    log_json(ib,args)
     ib.disconnect()
 else:
+    opens, closes = get_opens_and_closes(ib,args)
     order_csvs = {o:read_csv('/tmp/stonksanalysis/'+o+'.csv') for o in args.certain}
     order_stocks = {order:csv.symbol.tolist() for order,csv in order_csvs.items()}
     print_trades(opens, closes, order_stocks, args.out_file)
