@@ -12,7 +12,7 @@ def get_trade_info(trade: Trade) -> List[str]:
     today = date.today().strftime("%m/%d/%Y")
     local_symbol = trade.contract.localSymbol
     action = trade.order.action
-    price = str(trade.fills[0].execution.price)
+    price = str(sum([f.execution.price * f.execution.shares for f in trade.fills])/sum([fill.execution.shares for fill in trade.fills]))
     shares = str(sum([fill.execution.shares for fill in trade.fills]))
     status = str(trade.orderStatus.status)
     num_fills = str(len(trade.fills))
