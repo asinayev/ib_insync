@@ -18,7 +18,7 @@ dummy = ib.reqOpenOrders()
 if args.justprint:
     x=ib.openTrades()
     for OtC in x: 
-        print(OtC, "################################")
+        print(OtC.order.action, OtC.order.totalQuantity, OtC.contract.symbol, OtC.order.orderType, OtC.order.lmtPrice, OtC.order.tif, "################################")
 else:
     x = ib.openOrders()
     print(len(x), "################################")

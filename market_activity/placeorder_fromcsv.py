@@ -78,7 +78,7 @@ def get_price(ib,contract,is_limit,strike_price,action):
         ib.sleep(.1)
         i+=1
         if i>30:
-            print("Market price not found. Using strike price for: "+row['symbol'])
+            print("Market price not found. Using strike price for: "+contract.symbol)
             mkt_price=float(strike_price)
             break
     if i<=30:

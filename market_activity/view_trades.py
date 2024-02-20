@@ -37,8 +37,9 @@ def get_opens_and_closes(ib: IB, args) -> Tuple[List[List[str]], Dict[str, List[
 def pop_off_trade(order_stocks, trade):
     matched = order_stocks[(order_stocks.symbol==trade[1]) & ( abs(order_stocks.quantity-float(trade[5]) )<1 ) ]
     if not matched.empty:
-        first_matched = matched[0].index
-        matched_strat = order_stocks[first_matched]['trade_reason']
+        first_matched = matched.index[0]
+        matched_strat = order_stocks.loc[first_matched,'trade_reason']
+        matched_strat = matched_strat.split('/')[-1].split('.')[-2]
         order_stocks.drop(first_matched, inplace=True)
         return matched_strat
     else:
@@ -69,7 +70,6 @@ parser = argparse.ArgumentParser(description='Print trades in a very specific co
 
 
 parser.add_argument('--real', dest='real', action = 'store_true', help='Use real account instead of paper trading') 
-parser.add_argument('-c','--certain', action='append', help='Trades in order of certaintiy of execution executed', required=False)
 parser.add_argument('--out_file', type=str, required=False) 
 parser.add_argument('--file_type', type=str, required=False) 
 parser.set_defaults(feature=False)
