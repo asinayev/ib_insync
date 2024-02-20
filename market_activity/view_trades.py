@@ -1,11 +1,12 @@
 from ib_insync import IB, Trade
 from connection import initiate
 from datetime import date
-from pandas import read_csv
 from typing import List, Dict, Tuple
 
-import transaction_logging
 import argparse
+import ast
+import pandas as pd
+import transaction_logging
 
 def get_trade_info(trade: Trade) -> List[str]:
     today = date.today().strftime("%m/%d/%Y")
@@ -34,11 +35,14 @@ def get_opens_and_closes(ib: IB, args) -> Tuple[List[List[str]], Dict[str, List[
     return opens, closes
 
 def pop_off_trade(order_stocks, trade):
-    for order_type, stocks in order_stocks.items():
-        if trade[1] in stocks:
-            order_stocks[order_type] = [s for s in stocks if s != trade[1]]
-            return order_type
-    return ''
+    matched = order_stocks[(order_stocks.symbol==trade[1]) & (order_stocks.quantity==trade[5])]
+    if not matched.empty:
+        first_matched = matched[0].index
+        matched_strat = order_stocks[first_matched]['trade_reason']
+        order_stocks.drop(first_matched, inplace=True)
+        return matched_strat
+    else:
+        return ''
 
 def get_formatted_trade(t, closes, order_stocks):
     close_price = closes.get(t[1], ['','','',''])[3]
@@ -77,8 +81,8 @@ if args.file_type=='json':
     ib.disconnect()
 else:
     opens, closes = get_opens_and_closes(ib,args)
-    order_csvs = {o:read_csv('/tmp/stonksanalysis/'+o+'.csv') for o in args.certain}
-    order_stocks = {order:csv.symbol.tolist() for order,csv in order_csvs.items()}
+    with open('/tmp/stonksanalysis/order_logs.json', 'r') as f:
+        order_stocks = pd.DataFrame([ast.literal_eval(line) for line in f])
     print_trades(opens, closes, order_stocks, args.out_file)
     ib.disconnect()
 
