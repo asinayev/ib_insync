@@ -35,7 +35,7 @@ def get_opens_and_closes(ib: IB, args) -> Tuple[List[List[str]], Dict[str, List[
     return opens, closes
 
 def pop_off_trade(order_stocks, trade):
-    matched = order_stocks[(order_stocks.symbol==trade[1]) & ( abs(order_stocks.quantity-trade[5])<1 ) ]
+    matched = order_stocks[(order_stocks.symbol==trade[1]) & ( abs(order_stocks.quantity-float(trade[5]) )<1 ) ]
     if not matched.empty:
         first_matched = matched[0].index
         matched_strat = order_stocks[first_matched]['trade_reason']
