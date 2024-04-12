@@ -151,7 +151,7 @@ def place_order(row, ib):
     row['quantity'], notes=get_quantity(row,current_position,args.cash,row['strike_price'])
     part_order = get_ibkr_order(row, lmt_price,)
     if row['strike_price']>args.minprice and row['strike_price']*row['quantity']<args.cash*1.5:
-        print(f"Sending {ibkr_ordertype} order at {row['strike_price']}: {row['symbol']}")
+        print(f"Sending {row['order_type']} order at {row['strike_price']}: {row['symbol']}")
         this_trade = ib.placeOrder(row['contract'], part_order())
         transaction_logging.log_trade(this_trade,args.file,'/tmp/stonksanalysis/order_logs.json',notes)
     else:
