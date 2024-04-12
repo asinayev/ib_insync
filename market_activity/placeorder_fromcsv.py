@@ -54,12 +54,29 @@ def check_spy(args):
         if args.maxspymove and todays_change_perc > float(args.maxspymove):
             SPY_issue = 'SPY moved too high for \n'+args.file
     return SPY_issue
-
-def get_ibkr_order_type(row):
+        
+def get_ibkr_order(row, lmt_price):
     if row['time_in_force'] == 'close' and row['order_type'] in ['MKT', 'LMT']:
-        return {'MKT': 'MOC', 'LMT': 'LOC'}[row['order_type']]
+        order_type_to_use = {'MKT': 'MOC', 'LMT': 'LOC'}[row['order_type']]
     else:
-        return row['order_type']
+        order_type_to_use = row['order_type']
+    if row['order_type'] == 'Adaptive':
+        part_order = functools.partial(Order,
+                            action = row['action'],
+                            orderType = 'MKT',
+                            algoStrategy='Adaptive', 
+                            algoParams = [TagValue('adaptivePriority', 'Patient')],
+                            totalQuantity = row['quantity'], 
+                            tif = 'DAY', 
+                            lmtPrice=round(lmt_price,2))
+    else:
+        part_order = functools.partial(Order,
+                            action = row['action'],
+                            orderType = order_type_to_use, 
+                            totalQuantity = row['quantity'], 
+                            tif = row['time_in_force'], 
+                            lmtPrice=round(lmt_price,2))
+    return part_order
 
 def get_quantity(row,existing_position, to_spend, price):
     if row['action']=='BUY' and existing_position>0: 
@@ -71,24 +88,31 @@ def get_quantity(row,existing_position, to_spend, price):
     else:
         return abs(existing_position), {'close':1}
 
-def get_price(ib,contract,is_limit,strike_price,action):
-    last_live=ib.reqMktData(contract, genericTickList='', snapshot=True, regulatorySnapshot=False,mktDataOptions=None)
+def get_price(row, ib):
+    if row['order_type']=='LMT':
+        if 'strike_price' not in row or row['strike_price']=='':
+            print("Limit order has no strike price or close price. Skipping: "+row['symbol'])
+            return 0,0
+    last_live=ib.reqMktData(row['contract'], genericTickList='', snapshot=True, regulatorySnapshot=False,mktDataOptions=None)
     i=0
     while math.isnan(last_live.last):
         ib.sleep(.1)
         i+=1
         if i>30:
-            print("Market price not found. Using strike price for: "+contract.symbol)
-            mkt_price=float(strike_price)
+            print("Market price not found. Using strike price for: "+row['contract'].symbol)
+            mkt_price=float(row['strike_price'])
             break
     if i<=30:
         mkt_price=last_live.last
-    if is_limit:
-        return mkt_price, float(strike_price)
-    elif action=='BUY':
+    if row['order_type']=='LMT':
+        return mkt_price, float(row['strike_price'])
+    elif row['action']=='BUY':
         return mkt_price, mkt_price*1.1
-    elif action=='SELL':
+    elif row['action']=='SELL':
         return mkt_price, mkt_price*.9
+    else:
+        print("Did not match a known action.")
+        return 0,0
 
 def get_position(ib,sym):
     openPositions = ib.positions()
@@ -106,33 +130,26 @@ def get_position(ib,sym):
                     final_position-=t.order.totalQuantity
         return final_position
     else: return 0
-
-def place_order(row, ib):
-    ibkr_ordertype = get_ibkr_order_type(row)
+        
+def get_contract(row, ib):
     qualifieds=ib.qualifyContracts(Stock(row['symbol'], exchange='SMART', currency='USD'))
     if len(qualifieds)==0:
         print("Symbol not found. Skipping: "+row['symbol'])
         return
-    if len(qualifieds)>1:
+    elif len(qualifieds)>1:
         print("More than one contract for symbol found. Skipping: "+row['symbol'])
         return
-    if row['order_type']=='LMT':
-        if 'strike_price' not in row or row['strike_price']=='':
-            print("Stock has no strike price or close price. Skipping: "+row['symbol'])
-            return
-    row['contract']=qualifieds[0]
-    row['strike_price'], lmt_price = get_price(ib,row['contract'],row['order_type']=='LMT',row['strike_price'],row['action'])
-    if not lmt_price: 
-        print(f"Skipping because no price found for {row['symbol']}")
-        return
+    else:
+        return qualifieds[0]
+
+def place_order(row, ib):
+    row['contract']=get_contract(row, ib)
+    if not row['contract']: return
+    row['strike_price'], lmt_price = get_price(row, ib)
+    if not lmt_price: return
     current_position=get_position(ib,row['symbol'])
     row['quantity'], notes=get_quantity(row,current_position,args.cash,row['strike_price'])
-    part_order = functools.partial(Order,
-                        action = row['action'],
-                        orderType = ibkr_ordertype, 
-                        totalQuantity = row['quantity'], 
-                        tif = row['time_in_force'], 
-                        lmtPrice=round(lmt_price,2))
+    part_order = get_ibkr_order(row, lmt_price,)
     if row['strike_price']>args.minprice and row['strike_price']*row['quantity']<args.cash*1.5:
         print(f"Sending {ibkr_ordertype} order at {row['strike_price']}: {row['symbol']}")
         this_trade = ib.placeOrder(row['contract'], part_order())
