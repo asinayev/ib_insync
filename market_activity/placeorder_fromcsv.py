@@ -25,6 +25,7 @@ parser.add_argument('--minprice', type=float, required=True)
 parser.add_argument('--minspymove', type=float, required=False)
 parser.add_argument('--maxspymove', type=float, required=False)
 parser.add_argument('--spyfile', type=str, required=False)
+parser.add_argument('--opentrades', type=str, required=False)
 #File needs columns:
 # symbol
 
@@ -38,7 +39,14 @@ def order_if_needed(args):
         print(f"Executing {args.file}")
         ib = initiate.initiate_ib(args, 14)
         stockdict = csv.DictReader(open(args.file, "r"))
+        if args.opentrades:
+            open_trades = csv.DictReader(open(args.spyfile, "r"))
+            open_trades = {'strategy':'open_trades' for row in open_trades}
+        else: open_trades = {}
         for row in stockdict:
+            if row['symbol'] in open_trades:
+                if row['symbol'] > 4:
+                    continue
             place_order(row, ib)
         while ib.isConnected():
             ib.disconnect()
