@@ -25,7 +25,7 @@ parser.add_argument('--minprice', type=float, required=True)
 parser.add_argument('--minspymove', type=float, required=False)
 parser.add_argument('--maxspymove', type=float, required=False)
 parser.add_argument('--spyfile', type=str, required=False)
-parser.add_argument('--opentrades', type=str, required=False)
+parser.add_argument('--trixstatuslist', type=str, required=False)
 #File needs columns:
 # symbol
 
@@ -33,27 +33,21 @@ args = parser.parse_args()
 
 def order_if_needed(args):
     SPY_issue = check_spy(args)
-    if SPY_issue:
-        print(SPY_issue)
+    allowlist_issue = check_status_list(args)
+    if SPY_issue or allowlist_issue:
+        print(SPY_issue + allowlist_issue)
     else:
         print(f"Executing {args.file}")
         ib = initiate.initiate_ib(args, 14)
         stockdict = csv.DictReader(open(args.file, "r"))
-        if args.opentrades:
-            open_trades = csv.DictReader(open(args.spyfile, "r"))
-            open_trades = {'strategy':'open_trades' for row in open_trades}
-        else: open_trades = {}
         for row in stockdict:
-            if row['symbol'] in open_trades:
-                if row['symbol'] > 4:
-                    continue
             place_order(row, ib)
         while ib.isConnected():
             ib.disconnect()
             ib.waitOnUpdate(timeout=.3)
 
 def check_spy(args):
-    SPY_issue=None
+    SPY_issue=''
     if args.minspymove or args.maxspymove:
         spy = next(csv.DictReader(open(args.spyfile, "r")))
         todays_change_perc = float(spy['todaysChangePerc'])
@@ -62,6 +56,17 @@ def check_spy(args):
         if args.maxspymove and todays_change_perc > float(args.maxspymove):
             SPY_issue = 'SPY moved too high for \n'+args.file
     return SPY_issue
+
+def check_status_list(args):
+    allowlist_issue=''
+    if args.trixstatuslist:
+        status_list = csv.DictReader(open(args.trixstatuslist, "r"))
+        strat_name=args.file.split('/')[-1].split('.')[0]
+        for row in status_list:
+            if row['strategy']==strat_name:
+                if not int(row['allow']):
+                    allowed_issue=strat_name + ' not allowed by status file'
+    return allowlist_issue
         
 def get_ibkr_order(row, lmt_price):
     if row['time_in_force'] == 'close' and row['order_type'] in ['MKT', 'LMT']:
