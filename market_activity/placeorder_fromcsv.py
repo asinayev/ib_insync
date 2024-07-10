@@ -65,7 +65,7 @@ def check_status_list(args):
         for row in status_list:
             if row['strategy']==strat_name:
                 if not int(row['allow']):
-                    allowed_issue=strat_name + ' not allowed by status file'
+                    allowlist_issue=strat_name + ' not allowed by status file'
     return allowlist_issue
         
 def get_ibkr_order(row, lmt_price):
