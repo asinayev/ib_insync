@@ -1,4 +1,4 @@
-from ib_insync import IB, Trade
+from ib_async import IB, Trade
 from connection import initiate
 from datetime import date
 from typing import List, Dict, Tuple

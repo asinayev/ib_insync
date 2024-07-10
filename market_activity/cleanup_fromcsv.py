@@ -1,4 +1,4 @@
-from ib_insync import *
+from ib_async import *
 from connection import initiate
 from datetime import datetime, timedelta
 import transaction_logging
