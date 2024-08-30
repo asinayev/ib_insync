@@ -1,12 +1,13 @@
-from ib_async import *
-from connection import initiate
-from datetime import datetime, timedelta
-import transaction_logging
-import functools
 import argparse
 import csv
-import time
+import functools
 import re
+import time
+from datetime import datetime, timedelta
+
+from ib_async import *
+from connection import initiate
+import transaction_logging
 
 # Instantiate the parser
 parser = argparse.ArgumentParser(description='order closes for opened positions')
@@ -20,18 +21,17 @@ parser.set_defaults(feature=False)
 args = parser.parse_args()
 
 # Import data
-stocks = csv.DictReader(open(args.file, "r"))
-stock_tickers = [row['symbol'] for row in stocks \
+with open(args.file, "r") as file:
+    stocks = csv.DictReader(file)
+    stock_tickers = [row['symbol'] for row in stocks \
                      if 'close_type' not in row or \
                          (row['close_type']==args.closetype and bool(int(row['liquid'])) is not args.illiquid)]
 
-current_moves = csv.DictReader(open(args.currentstatusfile, "r"))
-current_moves = {row['symbol']:row for row in current_moves}
-addtnl_moves = {}
-for sym in current_moves:
-    if not sym.isalnum():
-        addtnl_moves[re.sub('[^0-9a-zA-Z]+', ' ', sym)]=current_moves[sym]
-current_moves.update(addtnl_moves)
+with open(args.currentstatusfile, "r") as file:
+    current_moves = csv.DictReader(file)
+    current_moves = {row['symbol']: row for row in current_moves}
+    addtnl_moves = {re.sub('[^0-9a-zA-Z]+', ' ', sym): current_moves[sym] for sym in current_moves if not sym.isalnum()}
+    current_moves.update(addtnl_moves)
 
 # Open connection
 ib = initiate.initiate_ib(args, 14)
@@ -111,29 +111,30 @@ def order_conditions(args, position, lmt_price=None, contr=None):
                      lmtPrice=lmt_price)
      
 for sym in stock_tickers:
-    print('starting close '+sym)
-    if sym in position_tickers and not sym in open_tickers:
-        position = openPositions[position_tickers[sym]]
-        contr = Stock(sym, exchange='SMART', currency='USD')
-        ib.qualifyContracts(contr)
-        if args.closetype=='last_high_eod':
-            if sym not in current_moves:
-                print("Stock "+sym+" does not have current data. CLOSE MANUALLY")
-                continue 
-            print("Closing stock "+sym+" at previous high")
-            order=order_conditions(args, position=position.position, lmt_price = round(float(current_moves[sym]["high"]),2), contr=contr)
-        elif args.closetype=='low_close_moo':
-            if float(current_moves[sym]["close"])<float(current_moves[sym]["low"])+.2*(float(current_moves[sym]["high"])-float(current_moves[sym]["low"])):
-              order=order_conditions(args, position=position.position, lmt_price = round(float(current_moves[sym]["high"])*1.1,2), contr=contr)
-            else:
-              continue
-        else:
-            order=order_conditions(args, position=position.position, contr=contr)
-        tr = ib.placeOrder(contr, order)
-        transaction_logging.log_trade(tr,args.file,'/tmp/stonksanalysis/order_logs.json',{'close':1})
-        print(tr)
-        time.sleep(3)
-        print("ordering close for "+sym)
+  if sym not in position_tickers or sym in open_tickers:
+      continue  
+  if sym not in current_moves:
+      print("Stock "+sym+" does not have current data. CLOSE MANUALLY")
+      continue 
+  print('starting close '+sym)
+  position = openPositions[position_tickers[sym]]
+  contr = Stock(sym, exchange='SMART', currency='USD')
+  ib.qualifyContracts(contr)
+  if args.closetype=='last_high_eod':
+      print("Closing stock "+sym+" at previous high")
+      order=order_conditions(args, position=position.position, lmt_price = round(float(current_moves[sym]["high"]),2), contr=contr)
+  elif args.closetype=='low_close_moo':
+      if float(current_moves[sym]["close"])<float(current_moves[sym]["low"])+.2*(float(current_moves[sym]["high"])-float(current_moves[sym]["low"])):
+        order=order_conditions(args, position=position.position, lmt_price = round(float(current_moves[sym]["high"])*1.1,2), contr=contr)
+      else:
+        continue
+  else:
+      order=order_conditions(args, position=position.position, contr=contr)
+  tr = ib.placeOrder(contr, order)
+  transaction_logging.log_trade(tr,args.file,'/tmp/stonksanalysis/order_logs.json',{'close':1})
+  print(tr)
+  time.sleep(3)
+  print("ordering close for "+sym)
 
 while ib.isConnected():
     ib.disconnect()
