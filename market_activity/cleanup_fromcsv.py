@@ -107,7 +107,8 @@ def order_conditions(args, position, lmt_price=None, contr=None):
                      algoStrategy='Adaptive', 
                      algoParams = [TagValue('adaptivePriority', 'Patient')],
                      totalQuantity = abs(position), 
-                     tif = "DAY", )
+                     tif = "DAY", 
+                     lmtPrice=lmt_price)
      
 for sym in stock_tickers:
     print('starting close '+sym)
@@ -121,13 +122,13 @@ for sym in stock_tickers:
                 continue 
             print("Closing stock "+sym+" at previous high")
             order=order_conditions(args, position=position.position, lmt_price = round(float(current_moves[sym]["high"]),2), contr=contr)
-        else:
-            order=order_conditions(args, position=position.position, contr=contr)
-        if args.closetype=='low_close_moo':
+        elif args.closetype=='low_close_moo':
             if float(current_moves[sym]["close"])<float(current_moves[sym]["low"])+.2*(float(current_moves[sym]["high"])-float(current_moves[sym]["low"])):
-              order=order_conditions(args, position=position.position, contr=contr)
+              order=order_conditions(args, position=position.position, lmt_price = round(float(current_moves[sym]["high"])*1.1,2), contr=contr)
             else:
               continue
+        else:
+            order=order_conditions(args, position=position.position, contr=contr)
         tr = ib.placeOrder(contr, order)
         transaction_logging.log_trade(tr,args.file,'/tmp/stonksanalysis/order_logs.json',{'close':1})
         print(tr)
