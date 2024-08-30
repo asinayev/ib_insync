@@ -22,8 +22,8 @@ args = parser.parse_args()
 
 # Import data
 with open(args.file, "r") as file:
-    stocks = csv.DictReader(file)
-    stock_tickers = [row['symbol'] for row in stocks \
+    rows_to_close = csv.DictReader(file)
+    tickers_to_close = [row['symbol'] for row in rows_to_close \
                      if 'close_type' not in row or \
                          (row['close_type']==args.closetype and bool(int(row['liquid'])) is not args.illiquid)]
 
@@ -35,12 +35,13 @@ with open(args.currentstatusfile, "r") as file:
 
 # Open connection
 ib = initiate.initiate_ib(args, 14)
-openTrades = ib.openTrades()
 
 # Order positions from this strategy to be closed 
+tickers_to_trade = [t.contract.symbol for t in ib.openTrades()]
+
 openPositions = ib.positions()
 position_tickers = {p.contract.symbol:i for i,p in enumerate(openPositions)}
-open_tickers = [t.contract.symbol for t in ib.openTrades()]
+
 
 def order_conditions(args, position, lmt_price=None, contr=None):
     time_condition = TimeCondition(isMore=True, time=datetime.today().strftime('%Y%m%d')+' 15:50:00 US/Eastern', conjunction='a')
@@ -110,8 +111,8 @@ def order_conditions(args, position, lmt_price=None, contr=None):
                      tif = "DAY", 
                      lmtPrice=lmt_price)
      
-for sym in stock_tickers:
-  if sym not in position_tickers or sym in open_tickers:
+for sym in tickers_to_close:
+  if sym not in position_tickers or sym in tickers_to_trade:
       continue  
   if sym not in current_moves:
       print("Stock "+sym+" does not have current data. CLOSE MANUALLY")
@@ -125,6 +126,7 @@ for sym in stock_tickers:
       order=order_conditions(args, position=position.position, lmt_price = round(float(current_moves[sym]["high"]),2), contr=contr)
   elif args.closetype=='low_close_moo':
       if float(current_moves[sym]["close"])<float(current_moves[sym]["low"])+.2*(float(current_moves[sym]["high"])-float(current_moves[sym]["low"])):
+        #limit price is fake
         order=order_conditions(args, position=position.position, lmt_price = round(float(current_moves[sym]["high"])*1.1,2), contr=contr)
       else:
         continue
