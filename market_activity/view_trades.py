@@ -1,23 +1,24 @@
 from ib_async import IB, Trade
 from connection import initiate
-from datetime import date
 from typing import List, Dict, Tuple
 
+import datetime
 import argparse
 import ast
 import pandas as pd
 import transaction_logging
 
 def get_trade_info(trade: Trade) -> List[str]:
-    today = date.today().strftime("%m/%d/%Y")
+    today = datetime.date.today().strftime("%m/%d/%Y")
     local_symbol = trade.contract.localSymbol
     action = trade.order.action
     price = str(sum([f.execution.price * f.execution.shares for f in trade.fills])/sum([fill.execution.shares for fill in trade.fills]))
     shares = str(sum([fill.execution.shares for fill in trade.fills]))
     status = str(trade.orderStatus.status)
+    commission = str(sum([fill.commissionReport.commission for fill in trade.fills]))
     num_fills = str(len(trade.fills))
-    time = str(trade.fills[0].execution.time)
-    return [today, local_symbol, action, price, '', shares, status, num_fills, time]
+    time = trade.fills[0].execution.time.strftime('%H:%M:%S')
+    return [today, local_symbol, action, price, '', shares, status, num_fills, time, commission]
 
 def log_json(ib: IB, args):
     for t in ib.trades():
