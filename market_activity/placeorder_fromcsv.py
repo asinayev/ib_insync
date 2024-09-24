@@ -163,8 +163,8 @@ def place_order(row, ib):
     if not lmt_price: return
     current_position=get_position(ib,row['symbol'])
     row['quantity'], notes=get_quantity(row,current_position,args.cash,row['strike_price'])
-    part_order = get_ibkr_order(row, lmt_price,)
     if row['strike_price']>args.minprice and row['strike_price']*row['quantity']<args.cash*1.5:
+        part_order = get_ibkr_order(row, lmt_price,)
         print(f"Sending {row['order_type']} order at {row['strike_price']}: {row['symbol']}")
         this_trade = ib.placeOrder(row['contract'], part_order())
         if row['order_type']=='MKT': #log the initial trade as control and make an additional trade logged as experiment
@@ -172,6 +172,7 @@ def place_order(row, ib):
             transaction_logging.log_trade(this_trade,args.file,'/tmp/stonksanalysis/order_logs.json',notes)
             row['order_type']='Adaptive'
             row['time_in_force']='DAY'
+            part_order = get_ibkr_order(row, lmt_price,)
             print(f"Sending {row['order_type']} order at {row['strike_price']}: {row['symbol']}")
             exp_trade = ib.placeOrder(row['contract'], part_order())
             notes.update({'adapt_exp':1})
