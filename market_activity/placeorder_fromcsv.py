@@ -171,7 +171,7 @@ def place_order(row, ib):
             notes.update({'adapt_exp':0})
             transaction_logging.log_trade(this_trade,args.file,'/tmp/stonksanalysis/order_logs.json',notes)
             row['order_type']='Adaptive'
-            row['time_in_force']='OPG'
+            row['time_in_force']='DAY'
             print(f"Sending {row['order_type']} order at {row['strike_price']}: {row['symbol']}")
             exp_trade = ib.placeOrder(row['contract'], part_order())
             notes.update({'adapt_exp':1})
