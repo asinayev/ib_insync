@@ -1,4 +1,5 @@
 import datetime 
+import time
 
 def log_trade(trade,trade_reason,log_dir,notes={}):
     continue_i=30
