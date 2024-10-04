@@ -1,6 +1,14 @@
 import datetime 
 
 def log_trade(trade,trade_reason,log_dir,notes={}):
+    continue_i=30
+    while trade.orderStatus.status=='PendingSubmit' and continue_i:
+        time.sleep(1)
+        continue_i-=1
+    if not continue_i:
+        print("order still pending after 30s")
+    else:
+        print(trade.orderStatus.status)
     traded=len(trade.fills)>0
     to_log={'symbol':trade.contract.localSymbol,
             'date':datetime.datetime.now().date().__str__(),
