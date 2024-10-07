@@ -178,7 +178,7 @@ def place_order(row, ib):
             notes.update({'adapt_exp':1})
             transaction_logging.log_trade(exp_trade,args.file,'/tmp/stonksanalysis/order_logs.json',notes)
         else: # just log the initial trade, not marking as control
-            transaction_logging.log_trade(this_trade,args.file,'/tmp/stonksanalysis/order_logs.json',notes)
+            transaction_logging.log_trade(this_trade,args.file,'/tmp/stonksanalysis/order_logs.json',notes,ib)
     else:
         print(f"Skipping because price {row['strike_price']} is too low or trying to order too much: {row['symbol']}")
 

@@ -133,7 +133,7 @@ for sym in tickers_to_close:
   else:
       order=order_conditions(args, position=position.position, contr=contr)
   tr = ib.placeOrder(contr, order)
-  transaction_logging.log_trade(tr,args.file,'/tmp/stonksanalysis/order_logs.json',{'close':1})
+  transaction_logging.log_trade(tr,args.file,'/tmp/stonksanalysis/order_logs.json',{'close':1},ib)
   print(tr)
   time.sleep(3)
   print("ordering close for "+sym)
