@@ -22,7 +22,7 @@ def get_trade_info(trade: Trade) -> List[str]:
 
 def log_json(ib: IB, args):
     for t in ib.trades():
-        transaction_logging.log_trade(t,'',args.out_file)
+        transaction_logging.log_trade(t,'',args.out_file,{},ib)
 
 def get_opens_and_closes(ib: IB, args) -> Tuple[List[List[str]], Dict[str, List[str]]]:
     opens = []
