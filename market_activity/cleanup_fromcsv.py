@@ -45,7 +45,8 @@ position_tickers = {p.contract.symbol:i for i,p in enumerate(openPositions)}
 
 def order_conditions(args, position, lmt_price=None, contr=None):
     time_condition = TimeCondition(isMore=True, time=datetime.today().strftime('%Y%m%d')+' 15:50:00 US/Eastern', conjunction='a')
-    if args.illiquid and args.closetype=='last_high_eod' and position>0:
+    limit_close_type =  args.closetype in ('last_high_eod','tru_rally')
+    if args.illiquid and limit_close_type and position>0:
         return Order(action="SELL",
                      orderType="LMT",
                      algoStrategy='Adaptive', 
@@ -81,7 +82,7 @@ def order_conditions(args, position, lmt_price=None, contr=None):
                      totalQuantity = abs(position), 
                      tif = "DAY",
                      conditions = [time_condition] )
-    elif not args.illiquid and args.closetype=='last_high_eod' and position>0:
+    elif not args.illiquid and limit_close_type and position>0:
         return Order(action="SELL",
                      orderType="LOC",
                      totalQuantity = abs(position), 
@@ -123,13 +124,18 @@ for sym in tickers_to_close:
   ib.qualifyContracts(contr)
   if args.closetype=='last_high_eod':
       print("Closing stock "+sym+" at previous high")
-      order=order_conditions(args, position=position.position, lmt_price = round(float(current_moves[sym]["high"]),2), contr=contr)
+      close_price = float(current_moves[sym]["high"])
+      order=order_conditions(args, position=position.position, lmt_price = round(close_price,2), contr=contr)
   elif args.closetype=='low_close_moo':
       if float(current_moves[sym]["close"])<float(current_moves[sym]["low"])+.2*(float(current_moves[sym]["high"])-float(current_moves[sym]["low"])):
         #limit price is fake
         order=order_conditions(args, position=position.position, lmt_price = round(float(current_moves[sym]["high"])*1.1,2), contr=contr)
       else:
         continue
+  elif args.closetype=='tru_rally':
+      print("Closing stock "+sym+" at previous day's movement above previous close")
+      close_price = float(current_moves[sym]["close"])+float(current_moves[sym]["high"])-float(current_moves[sym]["low"])
+      order=order_conditions(args, position=position.position, lmt_price = round(close_price,2), contr=contr)
   else:
       order=order_conditions(args, position=position.position, contr=contr)
   tr = ib.placeOrder(contr, order)
