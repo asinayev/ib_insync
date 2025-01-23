@@ -14,7 +14,7 @@ parser = argparse.ArgumentParser(description='order closes for opened positions'
 
 parser.add_argument('--file', type=str, required=True)
 parser.add_argument('--real', dest='real', action = 'store_true') 
-parser.add_argument('--closetype', type=str, required=True, choices=['last_high_eod','mkt_eod','low_close_moo'])
+parser.add_argument('--closetype', type=str, required=True, choices=['last_high_eod','mkt_eod','low_close_moo','tru_rally'])
 parser.add_argument('--illiquid', dest='illiquid', action='store_true')
 parser.add_argument('--currentstatusfile', type=str, required=False) 
 parser.set_defaults(feature=False)

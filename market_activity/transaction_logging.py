@@ -11,17 +11,18 @@ def log_trade(trade,trade_reason,log_dir,notes={},ib=None):
     else:
         print(trade.orderStatus.status)
     traded=len(trade.fills)>0
+    quantity=sum([fill.execution.shares for fill in trade.fills]) if traded else trade.order.totalQuantity
     to_log={'symbol':trade.contract.localSymbol,
             'date':datetime.datetime.now().date().__str__(),
             'order_id':[fill.execution.orderId for fill in trade.fills][0] if traded else trade.order.orderId,
             'action':trade.order.action,
-            'quantity':sum([fill.execution.shares for fill in trade.fills]) if traded else trade.order.totalQuantity,
+            'quantity':quantity,
             'order_type':trade.order.orderType,
             'lmt_price':trade.order.lmtPrice,
             'tif':trade.order.tif,
             'status':trade.orderStatus.status,
             'fills':len(trade.fills),            
-            'price_paid':sum([f.execution.price * f.execution.shares for f in trade.fills])/sum([fill.execution.shares for fill in trade.fills]),
+            'price_paid':sum([f.execution.price * f.execution.shares for f in trade.fills])/quantity if traded else 0,
             'commission':sum([fill.commissionReport.commission for fill in trade.fills]),
             'realizedPNL':sum([fill.commissionReport.realizedPNL for fill in trade.fills]),
             'trade_reason':trade_reason,
