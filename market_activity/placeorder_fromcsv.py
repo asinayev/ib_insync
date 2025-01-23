@@ -27,6 +27,7 @@ parser.add_argument('--minspymove', type=float, required=False)
 parser.add_argument('--maxspymove', type=float, required=False)
 parser.add_argument('--spyfile', type=str, required=False)
 parser.add_argument('--trixstatuslist', type=str, required=False)
+parser.add_argument('--experiment', dest='experiment', action='store_true')
 #File needs columns:
 # symbol
 
@@ -167,7 +168,7 @@ def place_order(row, ib):
         part_order = get_ibkr_order(row, lmt_price,)
         print(f"Sending {row['order_type']} order at {row['strike_price']}: {row['symbol']}")
         this_trade = ib.placeOrder(row['contract'], part_order())
-        if row['order_type']=='MKT': #log the initial trade as control and make an additional trade logged as experiment
+        if row['order_type']=='MKT' and args.experiment: #log the initial trade as control and make an additional trade logged as experiment
             notes.update({'adapt_exp':0})
             transaction_logging.log_trade(this_trade,args.file,'/tmp/stonksanalysis/order_logs.json',notes,ib)
             row['order_type']='Adaptive'
