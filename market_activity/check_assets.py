@@ -50,7 +50,7 @@ def find_liquidity(ticker, current_status_list):
 def mtm_position(ticker, current_status_list, position):
     for row in current_status_list:
         if row['symbol'] == ticker and 'AdjClose' in row:
-            return position*int(row['AdjClose'])
+            return position*float(row['AdjClose'])
     return 'UNKNOWN'
 
 if __name__ == '__main__':
