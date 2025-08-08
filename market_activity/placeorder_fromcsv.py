@@ -91,6 +91,18 @@ def get_ibkr_order(row, lmt_price):
                             totalQuantity = row['quantity'], 
                             tif = row['time_in_force'], 
                             lmtPrice=round(lmt_price,2))
+    if 'price_condition_max' in row or 'price_condition_min' in row:
+        conditions = [TimeCondition(isMore=False, time=datetime.today().strftime('%Y%m%d')+' 09:35:00 US/Eastern', conjunction='a')]
+        if 'price_condition_min' in row:
+            conditions.append(PriceCondition(1,conjunction='a', isMore=True,
+                        price=row['price_condition_min'], 
+                        exch='SMART', conId=row['contract'].conId))
+        if 'price_condition_max' in row:
+            conditions.append(PriceCondition(1,conjunction='a', isMore=False,
+                        price=row['price_condition_max'], 
+                        exch='SMART', conId=row['contract'].conId))
+        part_order = functools.partial(part_order,
+            conditions = conditions)
     return part_order
 
 def get_quantity(row,existing_position, to_spend, price):
