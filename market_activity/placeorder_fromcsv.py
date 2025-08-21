@@ -28,7 +28,7 @@ parser.add_argument('--maxspymove', type=float, required=False)
 parser.add_argument('--spyfile', type=str, required=False)
 parser.add_argument('--trixstatuslist', type=str, required=False)
 parser.add_argument('--experiment', dest='experiment', action='store_true')
-parser.add_argument('--buymore', dest='buymore', action='store_true')
+parser.add_argument('--holdposition', dest='holdposition', action='store_true')
 #File needs columns:
 # symbol
 
@@ -176,7 +176,7 @@ def place_order(row, ib):
     row['strike_price'], lmt_price = get_price(row, ib)
     if not lmt_price: return
     current_position=get_position(ib,row['symbol'])
-    if current_position and not args.buymore:
+    if current_position and args.holdposition:
         print(f"Already own: {row['symbol']}")
         return
     row['quantity'], notes=get_quantity(row,current_position,args.cash,row['strike_price'])
