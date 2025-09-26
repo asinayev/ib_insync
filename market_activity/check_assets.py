@@ -28,7 +28,8 @@ def print_correct_asset_file(close_types, position_tickers, liquidities, current
     for ticker in position_tickers:
         if ticker not in close_types:
             # when a position is not an asset, we add it with the appropriate close strategy and get the liquidity
-            correct_asset_file[ticker] = 'last_high_eod' if position_tickers[ticker] > 0 else 'low_close_moo'
+            delta = find_delta(ticker, current_status_list)
+            correct_asset_file[ticker] = 'last_high_eod' if position_tickers[ticker] > 0 and delta>.875 else 'low_close_moo'
             liquidities[ticker] = find_liquidity(ticker, current_status_list)
             if liquidities[ticker]=='UNKNOWN' and out_file:
                 liquidities[ticker]='0'
@@ -40,6 +41,12 @@ def print_correct_asset_file(close_types, position_tickers, liquidities, current
     print(*[f"{t},{correct_asset_file[t]},{liquidities[t]},{position_tickers[t]},{mtm_positions[t]}" for t in correct_asset_file], sep="\n", file=out_file)
     if out_file:
         out_file.close()
+
+def find_delta(ticker, current_status_list):
+    for row in current_status_list:
+        if row['symbol'] == ticker and int(row['volume']) > 50000:
+            return float(row['AdjClose'])/float(row['open'])
+    return 1
 
 def find_liquidity(ticker, current_status_list):
     for row in current_status_list:

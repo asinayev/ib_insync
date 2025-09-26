@@ -111,6 +111,19 @@ def order_conditions(args, position, lmt_price=None, contr=None):
                      totalQuantity = abs(position), 
                      tif = "DAY", 
                      lmtPrice=lmt_price)
+    elif not args.illiquid and args.closetype=='low_close_moo' and position>0:
+        return Order(action="SELL",
+                     orderType="MKT",
+                     totalQuantity = abs(position), 
+                     tif = "OPG")
+    elif args.illiquid and args.closetype=='low_close_moo' and position>0:
+        return Order(action="BUY",
+                     orderType="MKT",
+                     algoStrategy='Adaptive', 
+                     algoParams = [TagValue('adaptivePriority', 'Patient')],
+                     totalQuantity = abs(position), 
+                     tif = "DAY", 
+                     lmtPrice=lmt_price)
      
 for sym in tickers_to_close:
   if sym not in position_tickers or sym in tickers_to_trade:
@@ -122,20 +135,29 @@ for sym in tickers_to_close:
   position = openPositions[position_tickers[sym]]
   contr = Stock(sym, exchange='SMART', currency='USD')
   ib.qualifyContracts(contr)
+  close_price=float(current_moves[sym]["close"])
+  low_price=float(current_moves[sym]["low"])
+  open_price=float(current_moves[sym]["open"])
+  high_price = float(current_moves[sym]["high"])
   if args.closetype=='last_high_eod':
       print("Closing stock "+sym+" at previous high")
-      close_price = float(current_moves[sym]["high"])
-      order=order_conditions(args, position=position.position, lmt_price = round(close_price,2), contr=contr)
+      order=order_conditions(args, position=position.position, lmt_price = round(high_price,2), contr=contr)
   elif args.closetype=='low_close_moo':
-      if float(current_moves[sym]["close"])<float(current_moves[sym]["low"])+.2*(float(current_moves[sym]["high"])-float(current_moves[sym]["low"])):
+      low_close_short_condition = close_price<(low_price+.2*(high_price-low_price))
+      low_close_long_condition = close_price<open_price*0.875
+      if position.position<0 and low_close_short_condition:
+        print("Closing short stock "+sym+" at open after day drop")
         #limit price is fake
-        order=order_conditions(args, position=position.position, lmt_price = round(float(current_moves[sym]["high"])*1.1,2), contr=contr)
+        order=order_conditions(args, position=position.position, lmt_price = round(high_price*1.1,2), contr=contr)
+      elif position.position>0 and low_close_long_condition:
+        print("Closing long stock "+sym+" at open after day drop")
+        order=order_conditions(args, position=position.position, lmt_price = round(low_price*.8,2), contr=contr)
       else:
         continue
   elif args.closetype=='tru_rally':
       print("Closing stock "+sym+" at previous day's movement above previous close")
-      close_price = float(current_moves[sym]["close"])+float(current_moves[sym]["high"])-float(current_moves[sym]["low"])
-      order=order_conditions(args, position=position.position, lmt_price = round(close_price,2), contr=contr)
+      lmt_close_price = close_price+high_price-low_price
+      order=order_conditions(args, position=position.position, lmt_price = round(lmt_close_price,2), contr=contr)
   else:
       order=order_conditions(args, position=position.position, contr=contr)
   tr = ib.placeOrder(contr, order)
