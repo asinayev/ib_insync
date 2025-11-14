@@ -29,7 +29,7 @@ def print_correct_asset_file(close_types, position_tickers, liquidities, current
         if ticker not in close_types:
             # when a position is not an asset, we add it with the appropriate close strategy and get the liquidity
             delta = find_delta(ticker, current_status_list)
-            correct_asset_file[ticker] = 'last_high_eod' if position_tickers[ticker] > 0 and delta>.875 else 'low_close_moo'
+            correct_asset_file[ticker] = 'last_high_eod' if position_tickers[ticker] > 0 and delta>.815 else 'low_close_moo'
             liquidities[ticker] = find_liquidity(ticker, current_status_list)
             if liquidities[ticker]=='UNKNOWN' and out_file:
                 liquidities[ticker]='0'
