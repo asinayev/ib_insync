@@ -34,7 +34,7 @@ async def fetch_one_stock(ib, contract):
             'Open': ticker.open,
             'Volume': ticker.volume,
             'Close 5 Days Ago': bars[0].close,
-            'meets conditions': ticker.last<ticker.open*.825 and ticker.volume>500000 and ticker.last>7 and ticker.last<bars[0].close
+            'meets conditions': ticker.last<ticker.open*.8 and ticker.volume>500000 and ticker.last>7 and ticker.last<bars[0].close
         }
 
 async def get_drops():
