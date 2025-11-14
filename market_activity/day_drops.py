@@ -2,9 +2,10 @@ import asyncio
 import pandas as pd
 from ib_async import *
 import time
+import math
 
 # Create a semaphore that will allow 5 tasks to run concurrently
-SEMAPHORE_LIMIT = 5
+SEMAPHORE_LIMIT = 10 
 semaphore = asyncio.Semaphore(SEMAPHORE_LIMIT)
 
 async def fetch_one_stock(ib, contract):
@@ -14,12 +15,15 @@ async def fetch_one_stock(ib, contract):
     # async with will wait here until a "shopping cart" is free
     async with semaphore:
         ticker = ib.reqMktData(contract, '', snapshot=True)
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(1)
+        if not isinstance(ticker.last, float) or pd.isna(ticker.last):
+            ticker = ib.reqMktData(contract, '', snapshot=True)
+            await asyncio.sleep(0.2)
         bars = await ib.reqHistoricalDataAsync(
             contract, endDateTime='', durationStr='6 D',
             barSizeSetting='1 day', whatToShow='TRADES', useRTH=True
         )
-        
+       
         # More robust check to ensure all required data points exist
         if not all([ticker.close, ticker.last, bars]):
             print(f"--> Skipping {contract.symbol}, incomplete data.")
@@ -32,9 +36,9 @@ async def fetch_one_stock(ib, contract):
             'Last Price': ticker.last, 
             'Close': ticker.close,
             'Open': ticker.open,
-            'Volume': ticker.volume,
+            'Volume': ticker.volume*100,
             'Close 5 Days Ago': bars[0].close,
-            'meets conditions': ticker.last<ticker.open*.825 and ticker.volume>500000 and ticker.last>7 and ticker.last<bars[0].close
+            'meets conditions': ticker.last<ticker.open*.825 and ticker.volume>5000 and ticker.last>6 and ticker.last<bars[0].close
         }
 
 async def get_drops():
@@ -48,7 +52,7 @@ async def get_drops():
         await ib.connectAsync('127.0.0.1', 4001, clientId=1)
         print("✅ Successfully connected to IB.")
         
-        sub = ScannerSubscription(instrument='STK', locationCode='STK.US.MAJOR', scanCode='TOP_OPEN_PERC_LOSE')
+        sub = ScannerSubscription(numberOfRows=25, instrument='STK', locationCode='STK.US.MAJOR', scanCode='TOP_OPEN_PERC_LOSE', abovePrice=6, aboveVolume=400000)
         scan_data = await ib.reqScannerDataAsync(sub)
         contracts = [item.contractDetails.contract for item in scan_data]
         
@@ -62,7 +66,8 @@ async def get_drops():
         tasks = [fetch_one_stock(ib, contract) for contract in contracts]
         
         results = await asyncio.gather(*tasks)
-        valid_results = [res for res in results if res is not None and res['meets conditions']]
+        results = [res for res in results if res is not None]
+        valid_results = [res for res in results if res['meets conditions']]
         
         print("\n--- All results ---")
         print(pd.DataFrame(results)[['Symbol','Last Price','Open','Volume','Close 5 Days Ago','meets conditions']])
