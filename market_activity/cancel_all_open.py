@@ -7,6 +7,7 @@ import argparse
 parser = argparse.ArgumentParser(description='Cancel all open orders')
 
 parser.add_argument('--real', dest='real', action = 'store_true') 
+parser.add_argument('--account', type=str, required=False)
 parser.add_argument('--justprint', dest='justprint', action='store_true')
 parser.set_defaults(feature=False)
 args = parser.parse_args()
@@ -17,13 +18,17 @@ dummy = ib.reqOpenOrders()
 
 if args.justprint:
     x=ib.openTrades()
+    if args.account:
+        x = [t for t in x if t.order.account == args.account]
     for OtC in x: 
         print(OtC.order.action, OtC.order.totalQuantity, OtC.contract.symbol, OtC.order.orderType, OtC.order.lmtPrice, OtC.order.tif, "################################")
 else:
-    x = ib.openOrders()
+    x = ib.openTrades()
+    if args.account:
+        x = [t for t in x if t.order.account == args.account]
     print(len(x), "################################")
     for OtC in x: 
-        ib.cancelOrder(OtC)
+        ib.cancelOrder(OtC.order)
     print('canceled')
 ib.disconnect()
 

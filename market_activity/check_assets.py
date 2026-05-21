@@ -8,6 +8,8 @@ def check_asset_file(args):
     asset_dict = csv.DictReader(open(args.file, "r"))
     close_types, liquidities = extract_close_types_and_liquidities(asset_dict)
     open_positions = ib.positions()
+    if args.account:
+        open_positions = [p for p in open_positions if p.account == args.account]
     position_tickers = {p.contract.symbol: p.position for p in open_positions}
     current_status_list = list(csv.DictReader(open(args.current_status_file, "r")))
     print_correct_asset_file(close_types, position_tickers, liquidities, current_status_list, args.out_file)
@@ -44,13 +46,13 @@ def print_correct_asset_file(close_types, position_tickers, liquidities, current
 
 def find_delta(ticker, current_status_list):
     for row in current_status_list:
-        if row['symbol'] == ticker and int(row['volume']) > 50000:
+        if row['symbol'] == ticker and float(row['volume']) > 50000:
             return float(row['AdjClose'])/float(row['open'])
     return 1
 
 def find_liquidity(ticker, current_status_list):
     for row in current_status_list:
-        if row['symbol'] == ticker and int(row['volume']) > 150000:
+        if row['symbol'] == ticker and float(row['volume']) > 150000:
             return '1'
     return 'UNKNOWN'
 
@@ -64,6 +66,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Check for issues with asset file')
     parser.add_argument('--file', type=str, required=True, help='Path to asset file')
     parser.add_argument('--real', dest='real', action='store_true', help='Use real account')
+    parser.add_argument('--account', type=str, required=False, help='Account number')
     parser.add_argument('--current_status_file', type=str, required=True, help='Path to current status file')
     parser.add_argument('--out_file', type=str, required=False) 
 

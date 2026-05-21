@@ -14,6 +14,7 @@ parser = argparse.ArgumentParser(description='order closes for opened positions'
 
 parser.add_argument('--file', type=str, required=True)
 parser.add_argument('--real', dest='real', action = 'store_true') 
+parser.add_argument('--account', type=str, required=False)
 parser.add_argument('--closetype', type=str, required=True, choices=['last_high_eod','mkt_eod','low_close_moo','tru_rally'])
 parser.add_argument('--illiquid', dest='illiquid', action='store_true')
 parser.add_argument('--currentstatusfile', type=str, required=False) 
@@ -37,9 +38,11 @@ with open(args.currentstatusfile, "r") as file:
 ib = initiate.initiate_ib(args, 14)
 
 # Order positions from this strategy to be closed 
-tickers_to_trade = [t.contract.symbol for t in ib.openTrades()]
+tickers_to_trade = [t.contract.symbol for t in ib.openTrades() if not args.account or t.order.account == args.account]
 
 openPositions = ib.positions()
+if args.account:
+    openPositions = [p for p in openPositions if p.account == args.account]
 position_tickers = {p.contract.symbol:i for i,p in enumerate(openPositions)}
 
 
@@ -54,7 +57,8 @@ def order_conditions(args, position, lmt_price=None, contr=None):
                      totalQuantity = abs(position), 
                      tif = "DAY",
                      conditions = [time_condition],
-                     lmtPrice=lmt_price)
+                     lmtPrice=lmt_price,
+                     account=args.account)
     elif args.closetype=='last_high_eod' and position<0:
         price_condition = PriceCondition(1,conjunction='a', isMore=True,
                     price=lmt_price, 
@@ -65,7 +69,8 @@ def order_conditions(args, position, lmt_price=None, contr=None):
                      algoParams = [TagValue('adaptivePriority', 'Patient')],
                      totalQuantity = abs(position), 
                      tif = "DAY",
-                     conditions = [time_condition,price_condition] )
+                     conditions = [time_condition,price_condition],
+                     account=args.account )
     elif args.illiquid and args.closetype=='mkt_eod' and position<0:
         return Order(action="BUY",
                      orderType="MKT",
@@ -73,7 +78,8 @@ def order_conditions(args, position, lmt_price=None, contr=None):
                      algoParams = [TagValue('adaptivePriority', 'Patient')],
                      totalQuantity = abs(position), 
                      tif = "DAY",
-                     conditions = [time_condition] )
+                     conditions = [time_condition],
+                     account=args.account )
     elif args.illiquid and args.closetype=='mkt_eod' and position>0:
         return Order(action="SELL",
                      orderType="MKT",
@@ -81,28 +87,33 @@ def order_conditions(args, position, lmt_price=None, contr=None):
                      algoParams = [TagValue('adaptivePriority', 'Patient')],
                      totalQuantity = abs(position), 
                      tif = "DAY",
-                     conditions = [time_condition] )
+                     conditions = [time_condition],
+                     account=args.account )
     elif not args.illiquid and limit_close_type and position>0:
         return Order(action="SELL",
                      orderType="LOC",
                      totalQuantity = abs(position), 
                      tif = None,
-                     lmtPrice=lmt_price)
+                     lmtPrice=lmt_price,
+                     account=args.account)
     elif not args.illiquid and args.closetype=='mkt_eod' and position<0:
         return Order(action="BUY",
                      orderType="MOC",
                      totalQuantity = abs(position), 
-                     tif = None)
+                     tif = None,
+                     account=args.account)
     elif not args.illiquid and args.closetype=='mkt_eod' and position>0:
         return Order(action="SELL",
                      orderType="MOC",
                      totalQuantity = abs(position), 
-                     tif = None)
+                     tif = None,
+                     account=args.account)
     elif not args.illiquid and args.closetype=='low_close_moo' and position<0:
         return Order(action="BUY",
                      orderType="MKT",
                      totalQuantity = abs(position), 
-                     tif = "OPG")
+                     tif = "OPG",
+                     account=args.account)
     elif args.illiquid and args.closetype=='low_close_moo' and position<0:
         return Order(action="BUY",
                      orderType="MKT",
@@ -110,12 +121,14 @@ def order_conditions(args, position, lmt_price=None, contr=None):
                      algoParams = [TagValue('adaptivePriority', 'Patient')],
                      totalQuantity = abs(position), 
                      tif = "DAY", 
-                     lmtPrice=lmt_price)
+                     lmtPrice=lmt_price,
+                     account=args.account)
     elif not args.illiquid and args.closetype=='low_close_moo' and position>0:
         return Order(action="SELL",
                      orderType="MKT",
                      totalQuantity = abs(position), 
-                     tif = "OPG")
+                     tif = "OPG",
+                     account=args.account)
     elif args.illiquid and args.closetype=='low_close_moo' and position>0:
         return Order(action="BUY",
                      orderType="MKT",
@@ -123,7 +136,8 @@ def order_conditions(args, position, lmt_price=None, contr=None):
                      algoParams = [TagValue('adaptivePriority', 'Patient')],
                      totalQuantity = abs(position), 
                      tif = "DAY", 
-                     lmtPrice=lmt_price)
+                     lmtPrice=lmt_price,
+                     account=args.account)
      
 for sym in tickers_to_close:
   if sym not in position_tickers or sym in tickers_to_trade:

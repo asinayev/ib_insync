@@ -12,6 +12,7 @@ parser.add_argument('--exceptions', type=str, required=True)
 parser.add_argument('--ordertype', type=str, required=True, choices=['MOC','MKT']) 
 parser.add_argument('--timeinforce', type=str, required=True, choices=['OPG','DAY','close']) 
 parser.add_argument('--real', dest='real', action = 'store_true') 
+parser.add_argument('--account', type=str, required=False)
 #File needs columns:
 # symbol
 
@@ -23,6 +24,8 @@ stockdict = csv.DictReader(open(args.exceptions, "r"))
 exception_tickers = [row['symbol'] for row in stockdict]
 
 openPositions = ib.positions()
+if args.account:
+    openPositions = [p for p in openPositions if p.account == args.account]
 position_tickers = {p.contract.symbol:i for i,p in enumerate(openPositions)}
 
 for sym in position_tickers:
@@ -31,9 +34,9 @@ for sym in position_tickers:
         contr = Stock(sym, exchange='SMART', currency='USD')
         ib.qualifyContracts(contr)
         if position.position>0:
-            order =Order(action = 'SELL', orderType = args.ordertype, totalQuantity = position.position, tif = args.timeinforce  )
+            order =Order(action = 'SELL', orderType = args.ordertype, totalQuantity = position.position, tif = args.timeinforce, account=args.account)
         elif position.position<0:
-            order =Order(action = 'BUY', orderType = args.ordertype, totalQuantity = -(position.position) , tif = args.timeinforce )
+            order =Order(action = 'BUY', orderType = args.ordertype, totalQuantity = -(position.position) , tif = args.timeinforce, account=args.account )
         ib.placeOrder(contr, order)
         print("ordering close for "+sym)
 

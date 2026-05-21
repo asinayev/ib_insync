@@ -22,12 +22,15 @@ def get_trade_info(trade: Trade) -> List[str]:
 
 def log_json(ib: IB, args):
     for t in ib.trades():
-        transaction_logging.log_trade(t,'',args.out_file,{},ib)
+        if not args.account or t.order.account == args.account:
+            transaction_logging.log_trade(t,'',args.out_file,{},ib)
 
 def get_opens_and_closes(ib: IB, args) -> Tuple[List[List[str]], Dict[str, List[str]]]:
     opens = []
     closes = {}
     for t in ib.trades():
+        if args.account and t.order.account != args.account:
+            continue
         if len(t.fills) > 0 and all([f.commissionReport.realizedPNL == 0 for f in t.fills]):
             opens.append(get_trade_info(t))
         if len(t.fills) > 0 and any([f.commissionReport.realizedPNL != 0 for f in t.fills]):
@@ -71,6 +74,7 @@ parser = argparse.ArgumentParser(description='Print trades in a very specific co
 
 
 parser.add_argument('--real', dest='real', action = 'store_true', help='Use real account instead of paper trading') 
+parser.add_argument('--account', type=str, required=False)
 parser.add_argument('--out_file', type=str, required=False) 
 parser.add_argument('--file_type', type=str, required=False) 
 parser.set_defaults(feature=False)

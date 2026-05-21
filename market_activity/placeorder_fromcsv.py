@@ -21,6 +21,7 @@ parser.add_argument('--file', type=str, required=True)
 # time_in_force
 
 parser.add_argument('--real', dest='real', action='store_true') 
+parser.add_argument('--account', type=str, required=False)
 parser.add_argument('--cash', type=int, required=True)
 parser.add_argument('--minprice', type=float, required=True)
 parser.add_argument('--minspymove', type=float, required=False)
@@ -44,7 +45,7 @@ def order_if_needed(args):
         ib = initiate.initiate_ib(args, 14)
         stockdict = csv.DictReader(open(args.file, "r"))
         for row in stockdict:
-            place_order(row, ib)
+            place_order(row, ib, account=args.account)
         while ib.isConnected():
             ib.disconnect()
             ib.waitOnUpdate(timeout=.3)
@@ -71,7 +72,7 @@ def check_status_list(args):
                     allowlist_issue=strat_name + ' not allowed by status file'
     return allowlist_issue
         
-def get_ibkr_order(row, lmt_price):
+def get_ibkr_order(row, lmt_price, account=None):
     if row['time_in_force'] == 'close' and row['order_type'] in ['MKT', 'LMT']:
         order_type_to_use = {'MKT': 'MOC', 'LMT': 'LOC'}[row['order_type']]
     else:
@@ -84,14 +85,16 @@ def get_ibkr_order(row, lmt_price):
                             algoParams = [TagValue('adaptivePriority', 'Patient')],
                             totalQuantity = row['quantity'], 
                             tif = 'DAY', 
-                            lmtPrice=round(lmt_price,2))
+                            lmtPrice=round(lmt_price,2),
+                            account=account)
     else:
         part_order = functools.partial(Order,
                             action = row['action'],
                             orderType = order_type_to_use, 
                             totalQuantity = row['quantity'], 
                             tif = row['time_in_force'], 
-                            lmtPrice=round(lmt_price,2))
+                            lmtPrice=round(lmt_price,2),
+                            account=account)
     if 'price_condition_max' in row or 'price_condition_min' in row:
         conditions = [TimeCondition(isMore=False, time=datetime.today().strftime('%Y%m%d')+' 09:35:00 US/Eastern', conjunction='a')]
         if 'price_condition_min' in row:
@@ -142,12 +145,16 @@ def get_price(row, ib):
         print("Did not match a known action.")
         return 0,0
 
-def get_position(ib,sym):
+def get_position(ib, sym, account=None):
     openPositions = ib.positions()
+    if account:
+        openPositions = [p for p in openPositions if p.account == account]
     position_tickers = {p.contract.symbol:i for i,p in enumerate(openPositions)}
     ib.client.reqAllOpenOrders()
     _ = ib.reqOpenOrders()
     openTrades = ib.openTrades()
+    if account:
+        openTrades = [t for t in openTrades if t.order.account == account]
     if sym in position_tickers:
         final_position=openPositions[position_tickers[sym]].position
         for t in openTrades:
@@ -170,18 +177,18 @@ def get_contract(row, ib):
     else:
         return qualifieds[0]
 
-def place_order(row, ib):
+def place_order(row, ib, account=None):
     row['contract']=get_contract(row, ib)
     if not row['contract']: return
     row['strike_price'], lmt_price = get_price(row, ib)
     if not lmt_price: return
-    current_position=get_position(ib,row['symbol'])
+    current_position=get_position(ib,row['symbol'], account=account)
     if current_position and args.holdposition:
         print(f"Already own: {row['symbol']}")
         return
     row['quantity'], notes=get_quantity(row,current_position,args.cash,row['strike_price'])
     if row['strike_price']>args.minprice and row['strike_price']*row['quantity']<args.cash*1.5:
-        part_order = get_ibkr_order(row, lmt_price,)
+        part_order = get_ibkr_order(row, lmt_price, account=account)
         print(f"Sending {row['order_type']} order at {row['strike_price']}: {row['symbol']}")
         this_trade = ib.placeOrder(row['contract'], part_order())
         if row['order_type']=='MKT' and args.experiment: #log the initial trade as control and make an additional trade logged as experiment
@@ -189,7 +196,7 @@ def place_order(row, ib):
             transaction_logging.log_trade(this_trade,args.file,'/tmp/stonksanalysis/order_logs.json',notes,ib)
             row['order_type']='Adaptive'
             row['time_in_force']='DAY'
-            part_order = get_ibkr_order(row, lmt_price,)
+            part_order = get_ibkr_order(row, lmt_price, account=account)
             print(f"Sending {row['order_type']} order at {row['strike_price']}: {row['symbol']}")
             exp_trade = ib.placeOrder(row['contract'], part_order())
             notes.update({'adapt_exp':1})
